@@ -1,0 +1,24 @@
+# Glosario y siglas
+
+- `Baseline`: conjunto de información congelada bajo control de configuración.
+- `CI`: configuration item.
+- `CM`: configuration management.
+- `CONOPS`: concept of operations.
+- `EM`: engineering model.
+- `F0-F8`: fases formales del ciclo de vida.
+- `Go / No-Go`: decisión formal de continuidad o descarte.
+- `ICD`: interface control document.
+- `MCR`: concept review.
+- `NCR`: non-conformance report.
+- `PBS`: product breakdown structure.
+- `PDR`: preliminary design review.
+- `CDR`: critical design review.
+- `ROM`: rough order of magnitude.
+- `RTM`: requirements traceability matrix.
+- `SAR`: system acceptance review.
+- `SEMP-lite`: plan liviano de ingeniería de sistemas del proyecto.
+- `SRR`: system requirements review.
+- `SyRS`: system requirements specification.
+- `TRR`: test readiness review.
+- `V&V`: verification and validation.
+- `VCRM`: verification cross-reference matrix.
