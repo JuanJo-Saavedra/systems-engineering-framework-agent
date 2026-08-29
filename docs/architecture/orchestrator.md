@@ -8,41 +8,49 @@ status: propuesta
 
 ## Propósito
 
-Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como primer adaptador. El dominio de ingeniería de sistemas (`marco/`, `proyecto/`) no depende de ningún harness; los adaptadores traducen contratos canónicos a artefactos ejecutables.
+Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como primer adaptador. El dominio de ingeniería de sistemas (`framework/marco/`, instalado como `marco/`) y la instancia de proyecto (`proyecto/`) no dependen de ningún harness; los adaptadores traducen contratos canónicos a artefactos ejecutables.
 
 ## Principio rector
 
-> El dominio define **qué** se hace. El catálogo define **qué asistencia** existe. El harness define **cómo** se ejecuta. Ninguna capa inferior puede redefinir el significado de la superior.
+> El dominio define **qué** se hace. La arquitectura de capacidades define **qué asistencia** existe. El registry operativo define **qué skill** está disponible. El harness define **cómo** se ejecuta. Ninguna capa inferior puede redefinir el significado de la superior.
 
 ## Capas y responsabilidades
 
 | Capa                      | Ubicación                             | Responsabilidad                                |
 | ------------------------- | -------------------------------------- | ---------------------------------------------- |
-| Dominio (marco)           | `marco/`                             | Proceso, fases, reviews, baselines, glosario   |
+| Dominio (marco)           | `framework/marco/` (instalado como `marco/`) | Proceso, fases, reviews, baselines, glosario   |
 | Instancia de proyecto     | `proyecto/` (en el proyecto destino) | Estado, hitos y registros autoritativos        |
-| Catálogo de capacidades  | `guias/skill-registry.md`            | Qué asistencia existe y cuándo usarla        |
+| Arquitectura de capacidades | `framework/guias/skill-architecture.md` | Qué asistencia existe y cuándo usarla (diseño) |
+| Registry operativo | `runtime/catalogo/skill-registry.md` (instalado como `catalogo/skill-registry.md`) | Qué skill está disponible en runtime |
 | Contratos canónicos      | fuente harness-neutral                 | Contrato entre dominio y ejecución            |
-| Skills de fase            | `implementacion/skills/` (contratos ejecutables) | Procedimiento operativo por capacidad          |
+| Skills de fase            | `runtime/skills/` (contratos ejecutables) | Procedimiento operativo por capacidad          |
 | Orquestador padre         | sesión padre                          | Leer estado, elegir skill, delegar, escribir   |
 | Subagentes                | subagentes                             | Trabajo aislado o paralelo acotado             |
-| Adaptador Codex           | `implementacion/adapters/codex/`       | Traducir contratos →`.agents/`, `.codex/` |
+| Adaptador Codex           | `adapters/codex/`                      | Traducir contratos →`.agents/`, `.codex/` |
 | Integraciones MCP         | MCP                                    | Herramientas y memoria                         |
 | Memoria dual              | Markdown + Engram + RAG                | Persistencia autoritativa y suplementaria      |
-| Pruebas de comportamiento | `implementacion/tests/`                | Validar selección, degradación y fronteras   |
+| Pruebas de comportamiento | `tests/{unit,integration,fixtures}`    | Validar selección, degradación y fronteras   |
 
 ## Diagrama de capas
 
 ```text
                     ┌────────────────────────────────────────┐
-                    │          Dominio (marco/)              │
+                    │       Dominio (framework/marco/)        │
                     │   fases · reviews · baselines          │
                     └───────────────────┬────────────────────┘
                                         │ define significado
                     ┌───────────────────▼────────────────────┐
-                    │  Catálogo (guias/skill-registry.md)    │
-                    │  capacidades + cuándo usarlas          │
+                    │  Arquitectura de capacidades            │
+                    │  framework/guias/skill-architecture.md  │
+                    │  capacidades + cuándo usarlas (diseño)  │
                     └───────────────────┬────────────────────┘
-                                        │ selecciona
+                                        │ guía la selección
+                    ┌───────────────────▼────────────────────┐
+                    │  Registry operativo                     │
+                    │  runtime/catalogo/skill-registry.md     │
+                    │  skills disponibles (runtime)           │
+                    └───────────────────┬────────────────────┘
+                                        │ resuelve/carga
                     ┌───────────────────▼────────────────────┐
                     │        Orquestador padre               │
                     │  lee estado → elige skill → delega     │
@@ -74,7 +82,7 @@ Codex usa **progressive disclosure**: expone la metadata de una skill para que e
 | Seleccionar la skill de fase correcta | Orquestador padre            |
 | Cargar/ejecutar la skill              | Harness (inline o subagente) |
 
-> No reclamar que Codex "evalúa triggers de fase nativamente". El padre lee `proyecto/estado/*` y elige la capacidad vía `skill-registry.md`; el harness solo ejecuta la skill ya seleccionada.
+> No reclamar que Codex "evalúa triggers de fase nativamente". El padre lee `proyecto/estado/*` y elige la capacidad según la arquitectura de capacidades (`framework/guias/skill-architecture.md`, durante el diseño); en runtime resuelve/carga la skill solo desde el registry operativo (`runtime/catalogo/skill-registry.md`) + metadata del harness. El harness solo ejecuta la skill ya seleccionada.
 
 ## Asignación de capacidades
 
@@ -93,19 +101,24 @@ Candidatos iniciales de subagente (sin declarar subagente a toda capacidad trans
 
 ## Árbol fuente vs runtime instalado
 
-Separar los contratos fuente harness-neutral de los artefactos Codex generados/copiados. Existe **un único** contrato de runtime (`AGENTS.md`); el desarrollo del arnés es externo a la plantilla de runtime, se describe como estructura de implementación futura en `implementacion/` y no es una elección que el orquestador deba hacer durante la operación.
+Separar los contratos fuente harness-neutral de los artefactos Codex generados/copiados. Existe **un único** contrato de runtime (`runtime/AGENTS.md`, instalado como `AGENTS.md`); el desarrollo del arnés es externo a la plantilla de runtime, se describe como estructura de implementación futura en `runtime/agents/`, `adapters/codex/` e `installer/windows/` y no es una elección que el orquestador deba hacer durante la operación.
 
 ```text
-fuente (harness-neutral)                     runtime instalado (Codex, proyecto destino)
-├── guias/ (guías operativas y catálogo)    ├── .agents/skills/<skill>/SKILL.md
-└── implementacion/ (estructura futura)     ├── .codex/agents/*.toml
-    ├── arquitectura/                       ├── .codex/config.toml
-    ├── adapters/codex/ (plantillas)        └── AGENTS.md (runtime, adaptado)
-    ├── skills/ (contratos ejecutables)
-    └── tests/
+fuente (harness-neutral, repo de producto)        runtime instalado (Codex, proyecto destino)
+├── framework/marco/ (dominio)                  ├── marco/ (desde framework/marco/)
+├── framework/guias/skill-architecture.md       │   (no se instala)
+│   (arquitectura de capacidades; diseño)       │
+├── runtime/catalogo/skill-registry.md          ├── catalogo/skill-registry.md (read-only, desde runtime/catalogo/)
+├── runtime/                                    ├── .agents/skills/<skill>/SKILL.md (desde runtime/skills/)
+│   ├── AGENTS.md (contrato instalable)         ├── .codex/agents/*.toml (desde adapters/codex/)
+│   ├── skills/ (contratos ejecutables)         ├── .codex/config.toml (desde adapters/codex/)
+│   └── agents/ (contratos harness-neutral)     └── AGENTS.md (instalado, desde runtime/AGENTS.md)
+├── adapters/codex/ (plantillas)
+├── installer/windows/
+└── tests/{unit,integration,fixtures}
 ```
 
-> Estructura ilustrativa de la implementación futura; los nombres exactos se fijan al implementar el adaptador.
+> Las rutas del lado fuente son las rutas vigentes del repositorio (reestructuración ejecutada). Ver [product.md](product.md). Los nombres exactos de implementación se fijan al implementar el adaptador.
 
 ## Hechos de Codex (a confirmar en cada versión)
 
@@ -134,12 +147,13 @@ Restricciones de herramientas built-in: **no asumir** un allowlist genérico en 
 - Test de degradado sin Engram/RAG.
 - Test de frontera: ningún artefacto Codex reescribe dominio.
 
-Ver [frontera-dominio-harness.md](frontera-dominio-harness.md) y [memoria-dual.md](memoria-dual.md).
+Ver [domain-harness-boundary.md](domain-harness-boundary.md) y [memory.md](memory.md).
 
 ## Relacionado
 
-- [quickstart-agentes.md](quickstart-agentes.md) — flujo mínimo.
-- [frontera-dominio-harness.md](frontera-dominio-harness.md) — autoridad y dependencias.
-- [memoria-dual.md](memoria-dual.md) — persistencia.
-- [reestructuracion-agents.md](reestructuracion-agents.md) — decisión canónica: contrato único de `AGENTS.md`.
-- [skill-registry.md](skill-registry.md) — catálogo canónico.
+- [quickstart.md](../guides/quickstart.md) — flujo mínimo.
+- [domain-harness-boundary.md](domain-harness-boundary.md) — autoridad y dependencias.
+- [memory.md](memory.md) — persistencia.
+- [agents-contract.md](../decisions/agents-contract.md) — decisión canónica: contrato único de `AGENTS.md`.
+- [skill-artifacts.md](../decisions/skill-artifacts.md) — arquitectura de capacidades vs registry operativo.
+- [skill-architecture.md](../../framework/guias/skill-architecture.md) — arquitectura de capacidades.

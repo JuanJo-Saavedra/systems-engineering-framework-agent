@@ -3,7 +3,7 @@
 > **Decisión sobre el runtime de agentes para la plataforma de ingeniería asistida.**
 
 | Campo | Valor |
-|-------|-------|
+| ------- | ------- |
 | **Estado** | Borrador para presentación a panel (revisión de decisiones) |
 | **Fecha** | 21 de agosto de 2026 |
 | **Audiencia** | Panel de ingeniería/ejecutivo, mayormente no experto en IA |
@@ -68,7 +68,7 @@ La propuesta de dos pistas mapea exactamente a estos dos planos: probar el compo
 ### 3.1 Términos fundamentales
 
 | Término | Qué es | Ejemplo en este proyecto |
-|---------|--------|--------------------------|
+| --------- | -------- | -------------------------- |
 | **LLM / modelo** | Un modelo de lenguaje (GPT, Claude, Gemini…). Recibe texto y devuelve texto. No tiene memoria ni ejecuta acciones por sí solo. | El modelo que responde en la UI. Puede ser OpenAI, Anthropic u otro proveedor. |
 | **Agente** | Un sistema que **usa un LLM + herramientas + un bucle** para cumplir una tarea. El LLM decide qué herramienta llamar y cuándo terminar. | El "asistente de ingeniería" que lee un PDF aprobado, busca contexto y redacta una respuesta. |
 | **Bucle de agente (agent loop)** | El ciclo repetido: (1) el LLM decide una acción, (2) se ejecuta la herramienta, (3) el resultado vuelve al LLM, hasta que decide responder. | El agente lee el repositorio, consulta RAG, guarda una decisión en Engram y responde. |
@@ -87,11 +87,13 @@ La propuesta de dos pistas mapea exactamente a estos dos planos: probar el compo
 Un prompt es una instrucción de texto. Un agente es un **sistema en ejecución**: modelo + herramientas + bucle + estado + permisos. Cambiar el prompt no cambia el bucle; "agente" implica comportamiento, no solo redacción.
 
 **2. Una skill no es un subagente.**
+
 - Una **skill** es **conocimiento empaquetado** (instrucciones + archivos) que el agente principal *lee* y sigue. No ejecuta nada por sí misma; es contenido.
 - Un **subagente** es un **proceso independiente** con su propio bucle y contexto, que se **delega**.
 - Confundirlos lleva a sobre-arquitectura (crear subagentes donde bastaba una skill) o a infra-diseño (meter lógica de proceso en una skill que debería ser un componente ejecutable).
 
 **3. Memoria ≠ estado de workflow ≠ registro canónico.**
+
 - **Memoria (Engram):** conocimiento persistente entre sesiones ("qué decidimos", "qué aprendimos"). Cualitativo y reutilizable.
 - **Estado de workflow (sesión del harness / LangGraph):** el estado transitorio de una ejecución en curso (mensajes, pasos, checkpoint). Volátil por diseño.
 - **Registro canónico (SharePoint):** la **fuente de verdad** de los documentos aprobados. No se deriva de memoria ni de RAG; es el origen.
@@ -103,7 +105,7 @@ Un prompt es una instrucción de texto. Un agente es un **sistema en ejecución*
 La plataforma se describe como capas que **no deben mezclarse**. Cada capa tiene una responsabilidad única y una frontera de reemplazo.
 
 | Capa | Responsabilidad | Implementación candidata |
-|------|-----------------|--------------------------|
+| ------ | ----------------- | -------------------------- |
 | **Producto / UI** | Interfaz tipo NotebookLM para el usuario final | Streamlit (hoy) o web app propia |
 | **Dominio / backend** | Lógica de negocio, reglas de ingeniería, APIs | Servicio propio (Python/TS) |
 | **Comportamiento del agente** | Reglas de comportamiento, skills, evals | `AGENTS.md`, `.agents/skills/`, `evals/` |
@@ -156,7 +158,7 @@ Codex es un **agente de codificación de OpenAI que corre localmente**. Tiene do
 ### 5.2 Superficie de extensión (lo que aprovecharíamos)
 
 | Mecanismo | Qué hace | Relevancia |
-|-----------|----------|------------|
+| ----------- | ---------- | ------------ |
 | **`AGENTS.md`** | Archivo de configuración del agente: reglas, contexto y convenciones del proyecto. | El corazón del **comportamiento portable**. |
 | **Agent Skills** | Paquetes `SKILL.md` cargados bajo demanda (progressive disclosure). | Reutilización de capacidades y portabilidad. |
 | **MCP** | Conexión de servidores MCP (RAG, Engram, etc.) como herramientas. | Acceso a RAG y Engram. |
@@ -180,12 +182,14 @@ El app-server modela la conversación en tres niveles anidados: **thread** (conv
 ### 5.4 Fortalezas y limitaciones
 
 **Fortalezas**
+
 - Harness maduro y de código abierto con una superficie de extensión amplia y documentada.
 - `AGENTS.md`, Skills y MCP alineados con los estándares que ya queremos adoptar (misma base de portabilidad que Pi).
 - Aprobaciones, permisos, sandbox y subagentes **integrados** (sin tener que construirlos).
 - app-server/SDK pensados para incrustar el agente en un producto (auth, historial, aprobaciones, eventos).
 
 **Limitaciones**
+
 - Acoplamiento natural al ecosistema de modelos OpenAI (portabilidad de proveedor limitada "de fábrica").
 - El transporte WebSocket del app-server es **experimental**; la integración robusta es por stdio/socket local.
 - Menos control sobre el bucle interno: si necesitamos reescribir el runtime, no es el camino de "poseerlo".
@@ -206,7 +210,7 @@ Pi es un **harness de codificación mínimo en terminal**, escrito en **TypeScri
 **Paquetes relevantes:**
 
 | Paquete | Rol |
-|---------|-----|
+| --------- | ----- |
 | **`@earendil-works/pi-ai`** | API unificada de LLM multi-proveedor (OpenAI, Anthropic, Google, etc.). |
 | **`@earendil-works/pi-agent-core`** | Runtime del agente: tool calling y gestión de estado. |
 | **`@earendil-works/pi-coding-agent`** | CLI interactivo **y SDK programático** (el SDK no es un paquete separado). |
@@ -217,7 +221,7 @@ Pi es un **harness de codificación mínimo en terminal**, escrito en **TypeScri
 ### 6.2 Tres modos de integración
 
 | Modo | Qué es | Cuándo |
-|------|--------|--------|
+| ------ | -------- | -------- |
 | **SDK** (`createAgentSession`) | Incrustar el agente **en proceso** en una app Node/TS. | Integración nativa, tipado fuerte, acceso al estado. |
 | **RPC** (`pi --mode rpc`) | Protocolo JSON sobre **stdin/stdout** (JSONL). | Integración desde otro lenguaje o subproceso. |
 | **JSON event stream** (`pi --mode json`) | Eventos JSON en stdout para pipelines/UI. | Streaming simple hacia la UI. |
@@ -247,6 +251,7 @@ Pi **no incluye de fábrica**:
 ### 6.5 Fortalezas y limitaciones
 
 **Fortalezas**
+
 - Núcleo pequeño y **extensible** en TypeScript: SDK/RPC/JSON para incrustarlo donde queramos.
 - **Portabilidad de proveedor**: `pi-ai` abstrae múltiples proveedores (OpenAI, Anthropic, Google, custom). Un solo punto de conexión para todos los usuarios.
 - **Engram de primera clase** (memoria persistente).
@@ -254,6 +259,7 @@ Pi **no incluye de fábrica**:
 - MIT + comunidad activa; instalación simple (`npm install -g @earendil-works/pi-coding-agent`).
 
 **Limitaciones**
+
 - **Sin MCP, permisos ni subagentes integrados**: hay que construirlos o adaptarlos (costo de implementación).
 - **Sin sandbox integrado**: el aislamiento es responsabilidad nuestra (contenedores).
 - Menos "caja cerrada" que Codex: más control implica más código propio.
@@ -346,7 +352,7 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 9.1 Para el prototipo (velocidad de validación del comportamiento)
 
 | Criterio | Codex | Pi | Nota |
-|----------|-------|----|------|
+| ---------- | ------- | ---- | ------ |
 | Velocidad de puesta en marcha | ●●● | ●● | Codex trae todo integrado. |
 | Skills / `AGENTS.md` | ●●● | ●●● | Ambos siguen el estándar Agent Skills. |
 | MCP listo para usar | ●●● | ● | Pi requiere adaptador. |
@@ -358,7 +364,7 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 9.2 Para el producto (propiedad, control, portabilidad)
 
 | Criterio | Codex | Pi | Nota |
-|----------|-------|----|------|
+| ---------- | ------- | ---- | ------ |
 | Propiedad del runtime | ●● | ●●● | Pi es MIT y extensible por diseño. |
 | Portabilidad de proveedor | ●● | ●●● | `pi-ai` abstrae proveedores. |
 | Control del bucle interno | ●● | ●●● | Pi expone SDK/estado. |
@@ -369,7 +375,7 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 9.3 Ponderación propuesta (para el gate)
 
 | Dimensión | Peso propuesto | Razón |
-|-----------|----------------|-------|
+| ----------- | ---------------- | ------- |
 | Paridad de tareas en el benchmark | 35% | El comportamiento es el activo. |
 | Propiedad del runtime | 25% | Decisión estratégica de largo plazo. |
 | Portabilidad de proveedor | 15% | Evitar lock-in de modelo. |
@@ -385,11 +391,13 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 10.1 Codex
 
 **Pros**
+
 - Maduro, integrado, con la superficie completa (AGENTS.md, Skills, MCP, hooks, subagentes, aprobaciones, sandbox).
 - app-server/SDK para incrustar en producto.
 - Velocidad de prototipo máxima.
 
 **Contras**
+
 - Acoplamiento natural a OpenAI (portabilidad de proveedor limitada).
 - WebSocket del app-server experimental; producción por stdio/unix.
 - Menor control/posesión del runtime.
@@ -400,12 +408,14 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 10.2 Pi
 
 **Pros**
+
 - Runtime propio, extensible, con SDK/RPC/JSON.
 - Portabilidad de proveedor vía `pi-ai`.
 - Engram de primera clase.
 - MIT, TypeScript/Bun, sesiones con branching/compaction.
 
 **Contras**
+
 - Sin MCP, permisos, subagentes ni sandbox integrados (costo de construcción).
 - Más control implica más código propio.
 - Ecosistema menos "llave en mano" que Codex.
@@ -416,10 +426,12 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 10.3 LangGraph + Pi (híbrido)
 
 **Pros**
+
 - Orquestación durable multi-agente/multi-dominio con checkpointers e interrupt/resume.
 - Mezcla pasos deterministas y agenticos.
 
 **Contras**
+
 - Frontera de proceso Python ↔ TypeScript.
 - Duplica persistencia y HITL (checkpointer vs sesión Pi; `interrupt` vs `ctx.ui.confirm`).
 - Complejidad sin beneficio en la fase actual.
@@ -434,7 +446,7 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 11.1 Qué se transfiere sin cambios
 
 | Artefacto | ¿Portable? | Nota |
-|-----------|------------|------|
+| ----------- | ------------ | ------ |
 | `AGENTS.md` | **Sí** | Ambos harnesses lo leen como contexto. |
 | `.agents/skills/<name>/SKILL.md` | **Sí** | Estándar Agent Skills; Pi incluso puede leer skills de Codex. |
 | `mcp/` (definiciones de servidores MCP) | **Sí** (con matiz) | Codex los consume nativo; Pi necesita adaptador. El *contrato* es portable, el *mecanismo* no. |
@@ -446,7 +458,7 @@ Puntuación cualitativa: **●** débil, **●●** aceptable, **●●●** fue
 ### 11.2 Qué NO se transfiere (detrás de interfaces internas)
 
 | Componente | ¿Por qué no es portable? |
-|------------|--------------------------|
+| ------------ | -------------------------- |
 | Hooks del harness | Cada harness tiene su propio modelo de hooks. |
 | Sandbox / aislamiento | Codex lo integra; Pi lo delega a contenedores. |
 | Aprobaciones | Codex nativas; Pi vía extensiones. |
@@ -593,7 +605,7 @@ Presentado en la Sección 7.2. Muestra la frontera de proceso Python ↔ TypeScr
 ## 13. Plan por fases recomendado
 
 | Fase | Duración | Objetivo | Salida |
-|------|----------|----------|--------|
+| ------ | ---------- | ---------- | -------- |
 | **Fase 0 — Contrato de portabilidad** | ~1 semana | Fijar `AGENTS.md`, estructura `skills/`, `mcp/`, `evals/` e interfaces internas de harness. | Árbol de directorios y contrato congelado. |
 | **Codex time-box** | 2–4 semanas | Prototipo de comportamiento en Codex (RAG MCP, Engram MCP, skills, evals). | Prototipo funcional + benchmark. |
 | **Pi parity spike** | 1–2 semanas | Correr el **mismo** benchmark en Pi (SDK o RPC). | Métricas de paridad. |
@@ -608,7 +620,7 @@ Presentado en la Sección 7.2. Muestra la frontera de proceso Python ↔ TypeScr
 Cada PoC debe medirse con un número, no con impresiones.
 
 | PoC | Qué mide | Métrica objetivo |
-|-----|----------|------------------|
+| ----- | ---------- | ------------------ |
 | **RAG MCP: calidad** | Precisión de respuestas basadas en PDF aprobados. | Tasa de acierto en evals de referencia; nº de alucinaciones. |
 | **RAG MCP: ACL leakage** | Que el índice no devuelva fragmentos de proyectos sin permiso. | 0 fugas en el test de ACL (filtro por `user_id`/proyecto). |
 | **Calidad de tarea del agente** | ¿Cumple la tarea de ingeniería de punta a punta? | Pass rate del benchmark de tareas. |
@@ -631,7 +643,7 @@ Cada PoC debe medirse con un número, no con impresiones.
 ## 15. Riesgos, anti-patrones y mitigaciones
 
 | Riesgo / anti-patrón | Descripción | Mitigación |
-|----------------------|-------------|------------|
+| ---------------------- | ------------- | ------------ |
 | **Dos codebases divergiendo** | Codex y Pi evolucionan por separado y el comportamiento se bifurca. | Contrato de portabilidad + evals comunes como freno; una sola fuente de verdad del comportamiento. |
 | **Lógica de dominio en el harness** | Reglas de negocio escritas en hooks/extensiones del harness. | Mover la lógica de dominio al backend; el harness solo ejecuta comportamiento declarado. |
 | **Estado duplicado** | Estado en harness + memoria + grafo (si se agrega LangGraph). | Fronteras claras: sesión (harness) ≠ memoria (Engram) ≠ canónico (SharePoint). |
@@ -647,6 +659,7 @@ Cada PoC debe medirse con un número, no con impresiones.
 ## 16. Criterios de decisión y umbrales recomendados
 
 **Criterios (ponderación propuesta en 9.3):**
+
 1. Paridad de tareas en el benchmark (35%).
 2. Propiedad del runtime (25%).
 3. Portabilidad de proveedor (15%).
@@ -656,7 +669,7 @@ Cada PoC debe medirse con un número, no con impresiones.
 **Umbrales (propuesta de gobernanza, no hechos universales):**
 
 | Medición | Interpretación propuesta |
-|----------|--------------------------|
+| ---------- | -------------------------- |
 | Paridad de esfuerzo **`< 1,5×`** | Pi es **viable con fuerza**: el costo de poseer el runtime es bajo; elegir Pi. |
 | Paridad de esfuerzo **`> 2,5×`** | Retener **Codex para el MVP**: poseer el runtime hoy es demasiado caro; reevaluar más adelante. |
 | Zona **`1,5×`–`2,5×`** | **Revisión del panel**: decidir caso por caso con los pesos validados. |
@@ -703,35 +716,40 @@ Adoptar la **estrategia de dos pistas**: congelar el contrato de portabilidad, p
 Fuentes oficiales consultadas el **21 de agosto de 2026**.
 
 ### Codex (OpenAI)
-- https://github.com/openai/codex
-- https://developers.openai.com/codex/app-server
-- https://developers.openai.com/codex/build-skills
-- https://developers.openai.com/codex/agent-configuration/agents-md
-- https://developers.openai.com/codex/extend/mcp
-- https://developers.openai.com/codex/hooks
-- https://developers.openai.com/blog/codex-as-a-platform
+
+- <https://github.com/openai/codex>
+- <https://developers.openai.com/codex/app-server>
+- <https://developers.openai.com/codex/build-skills>
+- <https://developers.openai.com/codex/agent-configuration/agents-md>
+- <https://developers.openai.com/codex/extend/mcp>
+- <https://developers.openai.com/codex/hooks>
+- <https://developers.openai.com/blog/codex-as-a-platform>
 
 ### Pi Agent Harness
-- https://github.com/earendil-works/pi
-- https://pi.dev/docs/latest
-- https://pi.dev/docs/latest/sdk
-- https://pi.dev/docs/latest/rpc
-- https://pi.dev/docs/latest/json
-- https://pi.dev/docs/latest/extensions
-- https://pi.dev/docs/latest/skills
-- https://pi.dev/docs/latest/security
-- https://pi.dev/docs/latest/containerization
+
+- <https://github.com/earendil-works/pi>
+- <https://pi.dev/docs/latest>
+- <https://pi.dev/docs/latest/sdk>
+- <https://pi.dev/docs/latest/rpc>
+- <https://pi.dev/docs/latest/json>
+- <https://pi.dev/docs/latest/extensions>
+- <https://pi.dev/docs/latest/skills>
+- <https://pi.dev/docs/latest/security>
+- <https://pi.dev/docs/latest/containerization>
 
 ### Engram
-- https://github.com/Gentleman-Programming/engram
-- https://pi.dev/packages/gentle-engram
+
+- <https://github.com/Gentleman-Programming/engram>
+- <https://pi.dev/packages/gentle-engram>
 
 ### LangGraph
-- https://docs.langchain.com/oss/python/langgraph/overview
-- https://docs.langchain.com/oss/python/langgraph/interrupts
+
+- <https://docs.langchain.com/oss/python/langgraph/overview>
+- <https://docs.langchain.com/oss/python/langgraph/interrupts>
 
 ### Agent Skills
-- https://agentskills.io/specification
+
+- <https://agentskills.io/specification>
 
 ---
 

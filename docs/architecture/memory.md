@@ -112,7 +112,7 @@ url = "<url-real-del-servidor>"        # a confirmar
 
 ## Relacionado
 
-- [arquitectura-orquestador.md](arquitectura-orquestador.md) — capas.
-- [frontera-dominio-harness.md](frontera-dominio-harness.md) — autoridad.
-- [quickstart-agentes.md](quickstart-agentes.md) — flujo mínimo.
-- [reestructuracion-agents.md](reestructuracion-agents.md) — decisión canónica: contrato único de `AGENTS.md`.
+- [product.md](product.md) — capas.
+- [domain-harness-boundary.md](domain-harness-boundary.md) — autoridad.
+- [quickstart.md](../guides/quickstart.md) — flujo mínimo.
+- [agents-contract.md](../decisions/agents-contract.md) — decisión canónica: contrato único de `AGENTS.md`.

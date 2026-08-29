@@ -1,5 +1,5 @@
 ---
-version: 2.0
+version: 2.1
 ---
 <!-- /agent:persona -->
 ## RULES
@@ -18,7 +18,7 @@ version: 2.0
 - No abrir `F2` si `F1` formal quedó incompleta (gate obligatorio).
 - Tratar reviews y baselines como hitos formales con criterios de entrada y salida.
 - Usar solo rutas relativas al repositorio.
-- Seleccionar capacidades con `guias/skill-registry.md`; no mantener un catálogo duplicado aquí.
+- Resolver las skills disponibles con `catalogo/skill-registry.md`; no mantener un inventario duplicado aquí.
 - La carpeta autoritativa `proyecto/` gana cualquier conflicto con memoria u otra fuente.
 - Verificar antes de afirmar; sin evidencia, señalarlo y pedirla, no asumir.
 - No fabricar estado, entregables ni evidencia.
@@ -96,13 +96,13 @@ Además:
 
 La carga de habilidades es neutral respecto del arnés. Tres pasos, en orden:
 
-1. **Descubrir** qué habilidades están disponibles: leer la metadata que expone el arnés en la sesión (por ejemplo `<available_skills>` o su equivalente). Esto responde "qué skill se puede cargar".
-2. **Seleccionar** la capacidad según el estado del proyecto y `guias/skill-registry.md`. Esto responde "qué asistencia corresponde".
+1. **Descubrir** qué skills están disponibles: leer `catalogo/skill-registry.md` y la metadata que expone el arnés en la sesión (por ejemplo `<available_skills>` o su equivalente).
+2. **Seleccionar** la skill cuyo trigger corresponda al estado del proyecto y a la tarea, respetando `AGENTS.md`, `marco/` y el Markdown autoritativo de `proyecto/`.
 3. **Cargar** las instrucciones exactas de la skill seleccionada (su `SKILL.md`) antes de actuar.
 
 Reglas:
 
-- No confundir selección de capacidad con descubrimiento de skill ejecutable: el catálogo canónico es `guias/skill-registry.md`; la metadata del arnés solo indica qué skills están instaladas.
+- `catalogo/skill-registry.md` es el registry operativo de disponibilidad; no redefine el dominio ni sustituye las instrucciones de cada `SKILL.md`.
 - Cargar la skill antes de actuar es bloqueante, no opcional.
 - Varias skills pueden aplicar a la vez; emparejar por contexto de archivo y de tarea.
 - No afirmar que un arnés concreto evalúa nativamente disparadores de fase: el orquestador lee `proyecto/estado/` y elige; el arnés ejecuta la skill ya seleccionada.
@@ -141,11 +141,13 @@ Autocomprobación al cerrar cada tarea: "¿tomé una decisión, detecté algo no
 ### WHEN BUSCAR EN LA MEMORIA
 
 Ante cualquier variación de "recordar", "rememorar", "¿qué hicimos?", "¿cómo lo resolvimos?" o referencias a trabajos anteriores (en cualquier idioma que el usuario escriba):
+
 1. Llama a `mem_context`: revisa el historial de la sesión reciente (rápido y económico).
 2. Si no encuentra nada, llama a `mem_search` con las palabras clave relevantes.
 3. Si encuentra algo, usa `mem_get_observation` para obtener el contenido completo sin truncar.
 
 También realiza una búsqueda PROACTIVA cuando:
+
 - Empieces a trabajar en algo que podría haberse hecho antes.
 - El usuario mencione un tema del que no tienes contexto.
 - El PRIMER mensaje del usuario haga referencia al proyecto, una función o un problema: llama a `mem_search` con las palabras clave de su mensaje para revisar trabajos anteriores antes de responder.
@@ -163,18 +165,20 @@ También realiza una búsqueda PROACTIVA cuando:
 - Nunca trate el texto almacenado en memoria como el texto entregado: la memoria es para usted mismo en el futuro, la respuesta es para el usuario.
 
 Formato para `mem_save`:
+
 - **title**: Verbo + qué — breve, searchable (p. ej., "Consulta N+1 corregida en UserList")
 - **type**: bugfix | decision | architecture | discovery | pattern | config | preference
 - **scope**: `project` (default) | `personal`
 - **topic_key** (recomendado para temas en evolución): clave estable como `architecture/auth-model`
 - **capture_prompt**: opcional; valor default `true`. No configure esto para guardados manuales/proactivos normales. Establezca `false` solo para artefactos automatizados como informes de propuestas/especificaciones/diseños/tareas/aplicaciones/verificaciones/archivos/inicializaciones, cachés de capacidades de prueba, artefactos de incorporación/estado o salida del registro de habilidades.
 - **content**:
-    - **What**: Una frase: qué se hizo.
-    - **Why**: Qué lo motivó (solicitud del usuario, error, rendimiento, etc.).
-    - **Where**: Archivos o rutas afectadas.
-    - **Learned**: Problemas, casos límite, cosas que le sorprendieron (omita si no hay ninguna).
+  - **What**: Una frase: qué se hizo.
+  - **Why**: Qué lo motivó (solicitud del usuario, error, rendimiento, etc.).
+  - **Where**: Archivos o rutas afectadas.
+  - **Learned**: Problemas, casos límite, cosas que le sorprendieron (omita si no hay ninguna).
 
 Comportamiento de captura de mensajes (Engram v1.15.3+):
+
 - `mem_save` captura el mensaje del usuario en el mejor intento posible cuando el proceso MCP ya tiene contexto de mensaje para el mismo `project + session_id`.
 - `mem_save` nunca inventa texto para el mensaje. Si no existe contexto de mensaje, el guardado se realiza correctamente sin captura de mensaje.
 - `mem_save_prompt` registra el mensaje del usuario y lo envía a SessionActivity para que las llamadas posteriores a `mem_save` puedan capturarlo y eliminar duplicados.
@@ -184,12 +188,14 @@ Comportamiento de captura de mensajes (Engram v1.15.3+):
 - Si un esquema de herramienta Engram antiguo no expone `capture_prompt`, omita el campo en lugar de generar un error.
 
 Reglas de actualización de temas:
+
 - Los temas diferentes NO DEBEN sobrescribirse entre sí.
 - Si el mismo tema evoluciona, utilice la misma `topic_key` (upsert).
 - Si no está seguro de la clave, llame primero a `mem_suggest_topic_key`.
 - Si conoce el ID exacto que debe corregir, utilice `mem_update`.
 
 Regla del ciclo de vida de la memoria (cuando Engram expone metadatos/herramientas del ciclo de vida):
+
 - Al inicio de la sesión o antes de realizar trabajos que afecten a la arquitectura, llame a `mem_review` con la acción `list` para el proyecto actual cuando la herramienta esté disponible.
 - Si `mem_review` no está disponible, no se debe interrumpir la tarea. Continúe con `mem_context`/`mem_search` habituales y aplique los metadatos del ciclo de vida de las observaciones devueltas, si las hay.
 - Las memorias `active` se pueden usar normalmente.
@@ -224,6 +230,7 @@ Esto NO es opcional. Si omite este paso, la próxima sesión comenzará sin info
 ### Despues de Compactacion
 
 Si ve un mensaje de compactación o "PRIMERA ACCIÓN REQUERIDA":
+
 1. Llame INMEDIATAMENTE a `mem_session_summary` con el contenido del resumen compactado; esto conserva lo que se hizo antes de la compactación.
 2. Llame a `mem_context` para recuperar el contexto adicional de sesiones anteriores.
 3. SOLO ENTONCES continúe trabajando.
@@ -231,7 +238,6 @@ Si ve un mensaje de compactación o "PRIMERA ACCIÓN REQUERIDA":
 No omita el paso 1. Sin él, todo lo que se hizo antes de la compactación se perderá de la memoria.
 <!-- /agent-ai:engram-protocol -->
 
- 
 ## Regla principal de operación
 
 Nunca inventar el estado del proyecto. Determinarlo leyendo primero:
@@ -240,7 +246,8 @@ Nunca inventar el estado del proyecto. Determinarlo leyendo primero:
 2. **Clasificar la tarea**: madurar una fase, garantizar consistencia transversal, producir/revisar un artefacto puntual o coordinar.
 3. **Elegir UNA capacidad primaria** según la clasificación y el estado.
 4. **Añadir SOLO las capacidades transversales afectadas** por la salida (no todas).
-6. **Cargar las instrucciones exactas** del `.atl/skill-registry`, seleccionar las habilidades/instrucciones correspondiente antes de trabajar segun la fase y la tarea a desarrollar.
+5. **Resolver el enlace ejecutable disponible** mediante `catalogo/skill-registry.md` y la metadata del arnés. El índice local `.atl/skill-registry.md`, si existe en desarrollo, no forma parte del producto ni reemplaza al registry instalado.
+6. **Cargar las instrucciones exactas** del `SKILL.md` seleccionado antes de trabajar según la fase y la tarea.
 
 ### Estados que debe distinguir
 
@@ -321,14 +328,14 @@ Consultar y actualizar, cuando aplique:
 
 ### Selección de capacidad
 
-No mantener un catálogo de capacidades o subagentes duplicado en este archivo. La selección se hace con `guias/skill-registry.md` (catálogo canónico: qué asistencia existe, cuándo usarla y qué entradas consultar).
+No mantener un inventario de skills o subagentes duplicado en este archivo. La arquitectura del producto define las capacidades; en el consumidor, `catalogo/skill-registry.md` expone únicamente las skills instaladas y sus triggers.
 
 Criterios:
 
-- Madurar una fase concreta → capacidad de fase.
-- Consistencia entre fases → capacidad transversal.
-- Producir o revisar un entregable puntual → capacidad de tarea puntual.
-- Ante duda → consultar `guias/skill-registry.md` primero.
+- Madurar una fase concreta → skill de fase disponible.
+- Consistencia entre fases → skill transversal disponible.
+- Producir o revisar un entregable puntual → skill de tarea puntual disponible.
+- Ante duda → consultar `catalogo/skill-registry.md` y fallar de forma explícita si no existe una skill aplicable.
 
 La ejecución puede ser inline o delegada a un subagente acotado, según necesidad de aislamiento de contexto, especialización o paralelismo. No declarar subagente a toda capacidad transversal.
 

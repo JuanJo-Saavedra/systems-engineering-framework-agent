@@ -1,23 +1,25 @@
 ---
-document_type: catalogo
+document_type: arquitectura_capacidades
 language: es
-version: 2.0
+version: 2.1
 status: canonico
 ---
 
-# Catálogo canónico de capacidades del dominio
+# Arquitectura canónica de capacidades del framework
 
 ## Propósito
 
 Este archivo es el catálogo canónico, legible por humanos y versionado, de las capacidades de dominio del orquestador de runtime. Define qué asistencia puede dar el sistema, cuándo aplica, qué entradas autoritativas exige, qué salidas produce y qué guardas la limitan. No describe el estado de un proyecto puntual: eso vive en `proyecto/`.
 
+> Rutas citadas en las fichas: `marco/…` y `AGENTS.md` son las **rutas instaladas** que el runtime lee en el proyecto destino. En el repo de producto, el dominio vive en `framework/marco/` (instalado como `marco/`) y el contrato de runtime en `runtime/AGENTS.md` (instalado como `AGENTS.md`).
+
 ## Qué es y qué no es
 
 | Este catálogo es | Este catálogo NO es |
 | --- | --- |
-| Fuente de qué asistencia existe, cuándo aplica y qué exige. | Contrato de persona/comportamiento — eso es `AGENTS.md`. |
+| Fuente de qué asistencia existe, cuándo aplica y qué exige. | Contrato de persona/comportamiento — eso es el contrato de runtime (`runtime/AGENTS.md`, instalado como `AGENTS.md`). |
 | La base para **seleccionar** una capacidad según el estado del proyecto. | Un `SKILL.md` ejecutable ni instrucciones de procedimiento. |
-| Fuente de dominio, junto con `marco/`. | Una lista de skills/subagentes instalados. |
+| Fuente de dominio, junto con `framework/marco/` (instalado como `marco/`). | Una lista de skills/subagentes instalados. |
 | Catálogo versionado y mantenido a mano. | Estado del proyecto — eso vive en `proyecto/`. |
 
 ## Selección vs ejecución
@@ -33,7 +35,7 @@ Regla: ninguna capa inferior (skill, subagente, índice, adaptador) es autoridad
 
 ## Frente al generador de índice técnico de gentle-ai
 
-`implementacion/skill-registry-gentle-ai.md` es la referencia de una skill generadora: escanea rutas de `SKILL.md` instaladas y produce un registro técnico distinto. Un ejemplo de su salida es `.atl/skill-registry.md`, que es el índice técnico generado, **no** una ruta fuente que se escanea. Ese índice:
+`docs/history/skill-registry-gentle-ai.md` es la referencia **histórica** de una skill generadora: escanea rutas de `SKILL.md` instaladas y produce un registro técnico distinto. Un ejemplo de su salida es `.atl/skill-registry.md`, que es el índice técnico generado, **no** una ruta fuente que se escanea. Ese índice:
 
 - descubre implementaciones ejecutables ya instaladas;
 - es generado y de alcance técnico/operativo;
@@ -446,10 +448,10 @@ Reglas adicionales:
 
 ## Relacionado
 
-- [AGENTS.md](../AGENTS.md) — contrato de runtime (persona y comportamiento).
-- [arquitectura-orquestador.md](arquitectura-orquestador.md) — capas y adaptador.
-- [frontera-dominio-harness.md](frontera-dominio-harness.md) — autoridad y dependencias.
-- [memoria-dual.md](memoria-dual.md) — autoridad de memoria.
-- [quickstart-agentes.md](quickstart-agentes.md) — flujo mínimo.
-- [reestructuracion-agents.md](reestructuracion-agents.md) — decisión canónica: contrato único de `AGENTS.md`.
-- [implementacion/skill-registry-gentle-ai.md](../implementacion/skill-registry-gentle-ai.md) — referencia de la skill generadora del índice técnico (no canónica para el dominio).
+- [AGENTS.md](../../runtime/AGENTS.md) — contrato de runtime (fuente canónica).
+- [orchestrator.md](../../docs/architecture/orchestrator.md) — capas y adaptador.
+- [domain-harness-boundary.md](../../docs/architecture/domain-harness-boundary.md) — autoridad y dependencias.
+- [memory.md](../../docs/architecture/memory.md) — autoridad de memoria.
+- [quickstart.md](../../docs/guides/quickstart.md) — flujo mínimo.
+- [agents-contract.md](../../docs/decisions/agents-contract.md) — decisión canónica: contrato único de `AGENTS.md`.
+- [skill-registry-gentle-ai.md](../../docs/history/skill-registry-gentle-ai.md) — referencia histórica de la skill generadora del índice técnico (no canónica para el dominio).

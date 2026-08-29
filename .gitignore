@@ -4,3 +4,6 @@ tmp/
 *.log
 *.exe
 .env
+# Local Pi runtime state
+.atl/
+.codegraph/

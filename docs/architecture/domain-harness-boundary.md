@@ -10,15 +10,19 @@ status: propuesta
 
 Fijar la autoridad y la dirección de dependencias entre dominio, contratos canónicos, adaptadores de harness, herramientas/MCP y datos de proyecto, para que el harness no redefina el dominio.
 
+> Las rutas `framework/marco/`, `framework/guias/skill-architecture.md` y `runtime/catalogo/skill-registry.md` son las rutas vigentes del repositorio (reestructuración ejecutada). Ver [product.md](product.md).
+
 ## Dirección de dependencias
 
 ```text
-dominio (marco/)
+dominio (framework/marco/)
    ↑ autoridad de significado
-catálogo canónico (guias/skill-registry.md)
-   ↑ selección
+arquitectura de capacidades (framework/guias/skill-architecture.md)
+   ↑ selección conceptual
 contratos canónicos harness-neutral
    ↑ traducción
+registry operativo (runtime/catalogo/skill-registry.md)
+   ↑ disponibilidad de skills
 adaptador (Codex)
    ↑ ejecución
 herramientas / MCP
@@ -30,29 +34,30 @@ Regla: la dependencia apunta **hacia abajo** (lo inferior puede depender de lo s
 
 ## Autoridad por capa
 
-| Capa                              | Es autoridad sobre               | No es autoridad sobre    |
+| Capa | Es autoridad sobre | No es autoridad sobre |
 | --------------------------------- | -------------------------------- | ------------------------ |
-| Dominio (`marco/`)              | Significado del proceso          | Ejecución, herramientas |
-| Catálogo (`skill-registry.md`) | Qué asistencia existe y cuándo | Significado del dominio  |
-| Contratos canónicos              | Reglas de adaptación            | Significado del dominio  |
-| Adaptador                         | Artefactos ejecutables           | Significado, catálogo   |
-| Herramientas/MCP                  | Capacidad técnica               | Verdad del proyecto      |
-| Datos de proyecto (`proyecto/`) | Hechos del proyecto              | Proceso (lo respeta)     |
+| Dominio (`framework/marco/`) | Significado del proceso | Ejecución, herramientas |
+| Arquitectura de capacidades (`framework/guias/skill-architecture.md`) | Qué asistencia existe y cuándo (diseño) | Significado del dominio, disponibilidad runtime |
+| Contratos canónicos | Reglas de adaptación | Significado del dominio |
+| Registry operativo (`runtime/catalogo/skill-registry.md`) | Disponibilidad de skills | Significado del dominio, routing, guardas |
+| Adaptador | Artefactos ejecutables | Significado, arquitectura de capacidades |
+| Herramientas/MCP | Capacidad técnica | Verdad del proyecto |
+| Datos de proyecto (`proyecto/`) | Hechos del proyecto | Proceso (lo respeta) |
 
-## Catálogo canónico vs ejecutables
+## Arquitectura de capacidades vs registry operativo vs ejecutables
 
-`guias/skill-registry.md` es el **catálogo canónico legible por humanos** de qué asistencia puede dar el framework.
+`framework/guias/skill-architecture.md` es la **arquitectura de capacidades legible por humanos**: qué asistencia puede dar el framework y cuándo. `runtime/catalogo/skill-registry.md` es el **registry operativo** de skills disponibles en runtime.
 
-- Las skills y los subagentes son **mapeos/adaptadores ejecutables** del catálogo.
-- No se convierten en autoridad sobre el significado del dominio.
-- Un cambio de dominio se refleja primero en `marco/` y en el catálogo; después en skills y adaptadores.
+- Las skills y los subagentes son **mapeos/adaptadores ejecutables**; el registry solo enumera su disponibilidad.
+- Ni skills, ni subagentes, ni el registry se convierten en autoridad sobre el significado del dominio.
+- Un cambio de dominio se refleja primero en `framework/marco/` y en la arquitectura de capacidades; después en skills, registry y adaptadores.
 
 ## Matriz de responsabilidades
 
 | Responsabilidad                       | Dueño                                |
 | ------------------------------------- | ------------------------------------- |
-| Definir fase, regla o review          | Dominio (`marco/`)                  |
-| Decidir qué capacidad corresponde    | Catálogo + orquestador padre         |
+| Definir fase, regla o review          | Dominio (`framework/marco/`)        |
+| Decidir qué capacidad corresponde    | Arquitectura de capacidades + orquestador padre |
 | Ejecutar una capacidad                | Skill/subagente vía harness          |
 | Guardar hecho o decisión de proyecto | Markdown autoritativo (`proyecto/`) |
 | Recuperar o contextualizar            | RAG/Engram (sin autoridad)            |
@@ -61,8 +66,9 @@ Regla: la dependencia apunta **hacia abajo** (lo inferior puede depender de lo s
 
 | Cambio                                     | ¿Dónde pertenece?         |
 | ------------------------------------------ | --------------------------- |
-| Nueva regla de proceso                     | `marco/`                  |
-| Nueva capacidad o ajuste de cuándo usarla | `guias/skill-registry.md` |
+| Nueva regla de proceso                     | `framework/marco/`        |
+| Nueva capacidad o ajuste de cuándo usarla | `framework/guias/skill-architecture.md` |
+| Nueva skill disponible                    | `runtime/skills/` + regenerar `runtime/catalogo/skill-registry.md` |
 | Nuevo procedimiento de ejecución          | Skill                       |
 | Nueva configuración/agente Codex          | Adaptador                   |
 | Nueva integración de herramienta          | MCP                         |
@@ -87,12 +93,13 @@ Regla: la dependencia apunta **hacia abajo** (lo inferior puede depender de lo s
 | Sin reglas de dominio duplicadas en TOML           | Evitar doble autoridad y deriva               |
 | Sin memoria Engram que sobrescriba estado Markdown | Markdown es la verdad; Engram es suplemento   |
 
-Ver [memoria-dual.md](memoria-dual.md) para la política de autoridad de memoria.
+Ver [memory.md](memory.md) para la política de autoridad de memoria.
 
 ## Relacionado
 
-- [arquitectura-orquestador.md](arquitectura-orquestador.md) — capas.
-- [memoria-dual.md](memoria-dual.md) — autoridad de memoria.
-- [quickstart-agentes.md](quickstart-agentes.md) — flujo mínimo.
-- [reestructuracion-agents.md](reestructuracion-agents.md) — decisión canónica: contrato único de `AGENTS.md`.
-- [skill-registry.md](skill-registry.md) — catálogo canónico.
+- [orchestrator.md](orchestrator.md) — capas.
+- [memory.md](memory.md) — autoridad de memoria.
+- [quickstart.md](../guides/quickstart.md) — flujo mínimo.
+- [agents-contract.md](../decisions/agents-contract.md) — decisión canónica: contrato único de `AGENTS.md`.
+- [skill-artifacts.md](../decisions/skill-artifacts.md) — arquitectura de capacidades vs registry operativo.
+- [skill-architecture.md](../../framework/guias/skill-architecture.md) — arquitectura de capacidades.
