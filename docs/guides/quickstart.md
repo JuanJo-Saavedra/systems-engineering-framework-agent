@@ -11,7 +11,7 @@ status: propuesta
 
 Este documento describe el **MVP objetivo** de un orquestador Codex-first y harness-neutral. **No describe funcionalidad ya implementada**: el repo contiene el marco de ingeniería, su arquitectura de capacidades y la estructura runtime, no un orquestador ejecutable.
 
-El orquestador de runtime siempre **opera un proyecto de ingeniería**; no elige entre "desarrollar" y "operar". El desarrollo del arnés es externo a la plantilla de runtime y se describe como estructura de implementación futura en `runtime/agents/`, `adapters/codex/` e `installer/windows/`, fuera del flujo de operación. Ver [agents-contract.md](../decisions/agents-contract.md).
+El orquestador de runtime siempre **opera un proyecto de ingeniería**; no elige entre "desarrollar" y "operar". El desarrollo del arnés es externo a la plantilla de runtime y se describe como estructura de implementación futura en `runtime/agents/`, `adapters/codex/` y el paquete `se_agent` (CLI `se-agent`; ver [PRD 1](../prd/prd-001-one-shot-codex-scaffolder.md)), fuera del flujo de operación. Ver [agents-contract.md](../decisions/agents-contract.md).
 
 ## Flujo mínimo recomendado
 

@@ -1,10 +1,12 @@
 ---
 document_type: propuesta
 language: es
-version: 0.2
+version: 0.3
 status: propuesta
 ---
 # Frontera dominio-harness
+
+> Conciliada con [PRD 1](../prd/prd-001-one-shot-codex-scaffolder.md) (aprobado): el registry operativo se mantiene a mano con verificación CI; CI nunca lo genera ni lo modifica.
 
 ## Propósito
 
@@ -68,7 +70,7 @@ Regla: la dependencia apunta **hacia abajo** (lo inferior puede depender de lo s
 | ------------------------------------------ | --------------------------- |
 | Nueva regla de proceso                     | `framework/marco/`        |
 | Nueva capacidad o ajuste de cuándo usarla | `framework/guias/skill-architecture.md` |
-| Nueva skill disponible                    | `runtime/skills/` + regenerar `runtime/catalogo/skill-registry.md` |
+| Nueva skill disponible                    | `runtime/skills/` + actualizar a mano la entrada en `runtime/catalogo/skill-registry.md` (CI verifica la coherencia; nunca genera el registro) |
 | Nuevo procedimiento de ejecución          | Skill                       |
 | Nueva configuración/agente Codex          | Adaptador                   |
 | Nueva integración de herramienta          | MCP                         |
