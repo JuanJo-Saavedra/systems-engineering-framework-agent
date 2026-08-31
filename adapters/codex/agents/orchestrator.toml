@@ -1,0 +1,24 @@
+# Agente orquestador del marco de ingeniería de sistemas (instalado como .codex/agents/orchestrator.toml).
+#
+# LÍMITE DE FRONTERA: este archivo INSTANCIA el contrato de runtime POR
+# REFERENCIA. No contiene ninguna regla de dominio, puerta de fase ni
+# guardrail: todo eso vive únicamente en las fuentes autoritativas citadas
+# abajo. El Markdown autoritativo de proyecto/ gana cualquier conflicto.
+
+name = "orchestrator"
+description = "Orquestador del ciclo de vida: determina el estado leyendo las fuentes indicadas, clasifica la tarea, selecciona y carga la skill correspondiente del registro y ejecuta el contrato de runtime por referencia."
+
+# Contrato de runtime instanciado por referencia (rutas relativas al repositorio).
+[runtime_contract]
+
+# Fuente de reglas y guardrails comunes: lectura obligatoria antes de actuar.
+reglas = "AGENTS.md"
+
+# Proceso de dominio: fases, gates, reviews y baselines.
+modelo_dominio = "marco/"
+
+# Descubrimiento de skills disponibles: única fuente de disponibilidad.
+registro_skills = "catalogo/skill-registry.md"
+
+# Estado autoritativo del proyecto: solo lectura; nunca se inventa.
+estado_proyecto = "proyecto/estado/"
