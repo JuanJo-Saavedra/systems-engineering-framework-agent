@@ -1,0 +1,12 @@
+# Configuración de mecanismos Codex para este repositorio (instalada como .codex/config.toml).
+#
+# LÍMITE DE FRONTERA: los artefactos .codex exponen MECANISMOS, no reglas de
+# dominio. La autoridad del dominio vive en AGENTS.md y en marco/; este archivo
+# no redefine, amplía ni contradice ninguna regla, puerta de fase ni guardrail.
+# El agente orquestador se define en .codex/agents/orchestrator.toml.
+
+# Mecanismo: política de aprobación de acciones del agente (clave estable de Codex).
+approval_policy = "on-request"
+
+# Mecanismo: sandbox por defecto para la ejecución del agente (clave estable de Codex).
+sandbox_mode = "workspace-write"
