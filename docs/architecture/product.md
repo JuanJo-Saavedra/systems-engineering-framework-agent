@@ -1,7 +1,7 @@
 ---
 document_type: arquitectura_producto
 language: es
-version: 2.2
+version: 3.0
 status: adoptada
 ---
 
@@ -9,44 +9,49 @@ status: adoptada
 
 ## Decisión ejecutiva
 
-**La reestructuración física al árbol por capas está ejecutada.** El repositorio ya no contiene el árbol plano migrado transitorio (con `marco/`, `AGENTS.md` raíz, `catalogo/skill-registry.md`, `adapter/`, `skills/`, `agent/`, `manifest/` y `tests/` a nivel raíz); esa superficie fue reubicada en el árbol canónico por capas: `framework/` (dominio y guías de diseño), `runtime/` (contrato, skills instalables y registry operativo), `adapters/codex/` (específico de Codex), `installer/windows/` (comandos y empaquetado), `tests/{unit,integration,fixtures}` y `release/` (fuentes de publicación). La v2.1 separó la **arquitectura de capacidades** (`framework/guias/skill-architecture.md`) del **registry operativo** (fuente `runtime/catalogo/skill-registry.md`, instalado como `catalogo/skill-registry.md`). La v2.2 registra que esa topología ya es el estado real del repositorio y convierte el antiguo plan de transición en un registro de transición ejecutada con pendientes de implementación explícitas.
+**PRD 1 ([`docs/prd/prd-001-one-shot-codex-scaffolder.md`](../prd/prd-001-one-shot-codex-scaffolder.md), aprobado) define el MVP.** Esta v3.0 concilia la arquitectura con ese PRD y **supersede la v2.2** en todo lo que contradiga: distribución, comandos, propiedad de archivos instalados y modelo del registry.
 
-El producto sigue distribuyéndose como **ejecutable portátil de Windows vía GitHub Releases** y, en un proyecto destino, instala y mantiene únicamente un conjunto acotado de archivos gestionados: `marco/` (solo lectura, desde `framework/marco/`), el `AGENTS.md` de raíz (desde `runtime/AGENTS.md`), `catalogo/skill-registry.md` (copia gestionada read-only, desde `runtime/catalogo/skill-registry.md`), las skills en `.agents/skills/` (desde `runtime/skills/`), los artefactos de configuración Codex en `.codex/` (desde `adapters/codex/`) y el manifiesto/hashes en `.framework-agent/`. `framework/guias/` **no** se instala en consumidores: es base de diseño, comportamiento y accionamiento del producto. El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entregables, evidencia ni esquemas de proyecto. El repositorio `proyecto-base` no es fuente canónica del marco: es un **fixture de consumo y aceptación** con copias instaladas gestionadas.
+El producto se distribuye como **paquete Python `se_agent` (CLI `se-agent`, Python `>=3.12`) instalable con `pipx` desde el ZIP expuesto por un tag SemVer inmutable de GitHub**. Sin PyPI y sin EXE portátil en el MVP. Es un **scaffolder one-shot**: `se-agent init --harness codex --target .` escribe exactamente el payload declarado (PRD 1, §7) y termina. Los archivos instalados son **100 % propiedad del consumidor** desde el momento posterior a `init`: no hay manifiesto, hashes, `.framework-agent/`, `update`, `doctor`, `uninstall`, migraciones, copias gestionadas ni detección de deriva. El ciclo de vida gestionado queda registrado como **propuesta futura**, no como comportamiento parcial del MVP.
+
+El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entregables, evidencia ni esquemas de proyecto. `framework/guias/` **no** se instala en consumidores: es base de diseño, comportamiento y accionamiento del producto. El repositorio `proyecto-base` no es fuente canónica del marco: es un **fixture de consumo y aceptación** con copias instaladas propiedad del consumidor.
 
 | Punto | Decisión adoptada |
 | --- | --- |
-| Árbol de implementación | Árbol por capas adoptado; la reestructuración física está ejecutada. |
+| Autoridad de requisitos | PRD 1 aprobado ([`docs/prd/prd-001-one-shot-codex-scaffolder.md`](../prd/prd-001-one-shot-codex-scaffolder.md)); este documento concilia la arquitectura con él. |
+| Producto/CLI | `se-agent`; módulo Python `se_agent`; Python `>=3.12` (implementación pendiente). |
+| Distribución | `pipx` instala el ZIP del tag SemVer inmutable de GitHub. Sin PyPI, sin EXE portátil. Tag, versión del paquete y `se-agent --version` coinciden. |
+| Modelo de instalación | One-shot. `init` escribe el payload (PRD 1, §7) y termina; lo instalado es del consumidor. |
+| Comandos en MVP | `se-agent init --harness codex --target .` y `se-agent --version`. Nada más. |
+| Manifiesto / hashes / `update` / `doctor` / `uninstall` / migraciones / deriva / generador de registry | **Ninguno existe en el MVP.** Ciclo de vida gestionado = propuesta futura. |
+| Frontera de escritura | Solo el payload de §7 del PRD. Preflight completo antes de la primera escritura; colisiones `[y/N]` en interactivo, `--force` en no interactivo; `--force` no escapa del write-set; `proyecto/` intocable siempre; se rechazan escapes por `..` y symlinks. |
+| Registry operativo | `runtime/catalogo/skill-registry.md`, **mantenido a mano** por los autores del producto. CI/tests verifican coherencia bidireccional con `runtime/skills/` y nunca generan ni modifican el registry. |
+| Árbol de implementación | Árbol por capas ejecutado: `framework/`, `runtime/`, `adapters/codex/`, `tests/{unit,integration,fixtures}`, `release/`, `docs/`. |
 | Dominio canónico | `framework/marco/`; se instala como `marco/`. |
-| Guías canónicas del framework | `framework/guias/`; separadas de `docs/history/`; **no** se instalan en consumidores. |
-| Arquitectura de capacidades | `framework/guias/skill-architecture.md`. |
-| Registry operativo | `runtime/catalogo/skill-registry.md` (bootstrap con 0 skills; generador/CI pendiente); se instala como `catalogo/skill-registry.md` read-only. |
-| Índice técnico del harness | `.atl/skill-registry.md`; solo desarrollo, no se empaqueta ni se instala. |
-| Contrato instalable | `runtime/AGENTS.md` es la **única** fuente; no hay `AGENTS.md` en raíz del repo de producto. |
-| Destino del contrato | En el consumidor se instala como `AGENTS.md` de raíz. |
-| Skills | `runtime/skills/` → `.agents/skills/` (vacío por ahora; no se declaran skills disponibles). |
-| Contratos runtime harness-neutral | `runtime/agents/`. |
-| Específico de Codex | `adapters/codex/`. |
-| Instalador | `installer/windows/` alojará `init`/`update`/`doctor`/`version` y el empaquetado portable (implementación pendiente). |
+| Guías canónicas del framework | `framework/guias/`; **no** se instalan en consumidores. |
+| Arquitectura de capacidades | `framework/guias/skill-architecture.md` (autoridad de significado conceptual; separada del registry operativo). |
+| Contrato instalable | `runtime/AGENTS.md` es la **única** fuente; no hay `AGENTS.md` en raíz del repo de producto; en el consumidor se instala como `AGENTS.md` de raíz. |
+| Skills | `runtime/skills/` → `.agents/skills/`. **Implementación pendiente**: exactamente una skill F0 funcional en el MVP. |
+| Contratos runtime harness-neutral | `runtime/agents/`. Sin destino de instalación definido en el MVP (seguimiento abierto, PRD 1 §12); no se instala. |
+| Específico de Codex | `adapters/codex/` (`.codex/config.toml`, `.codex/agents/*.toml`). Artefactos **por crear**; exponen mecanismos, nunca reglas de dominio. |
+| Instalador | El enfoque `installer/windows/` (comandos y empaquetado portable EXE) quedó **obsoleto** con PRD 1; lo sustituye el paquete Python `se_agent`. |
 | Tests | `tests/{unit,integration,fixtures}` (estructura creada; pruebas de comportamiento pendientes). |
-| Publicación | `release/` contiene fuentes de manifiesto/hashes/notas/config (estructura creada; build/publicación pendientes). |
+| Publicación | `release/` contiene fuentes de publicación; el artefacto de distribución es el ZIP del tag (fuente automática de GitHub). Sin manifiesto ni hashes de release. |
 | Histórico | `docs/history/` completo es deprecated, histórico, no autoritativo y no participa en generación. |
-| Superficie gestionada | `marco/`, `AGENTS.md` raíz, `catalogo/skill-registry.md`, `.agents/skills/`, `.codex/`, `.framework-agent/`. |
-| Superficie prohibida | `proyecto/`, registros, hitos, entregables, evidencia, esquemas de proyecto. |
-| Autoridad de `AGENTS.md` | Un único contrato semántico de runtime; `runtime/AGENTS.md` es la fuente canónica. |
-| Integridad | Manifiesto + SHA-256 (integridad, **no** firma de código). |
+| Write-set instalado | `marco/`, `AGENTS.md` raíz, `catalogo/skill-registry.md`, `.agents/skills/`, `.codex/` (PRD 1, §7). |
+| Superficie prohibida | `proyecto/`, registros, hitos, entregables, evidencia, esquemas de proyecto; todo archivo fuera del write-set. |
 | Submódulos | No se usan. |
 | `proyecto-base` | Fixture de consumo y aceptación, no fuente canónica. |
 
 ## Propósito
 
-Este documento es el handoff de arquitectura para el repositorio `systems-engineering-framework-agent`. Fija qué se construye, qué se instala y qué queda fuera, y registra la frontera que impide que el instalador/actualizador toque datos de proyecto. La v2.0 adoptó la **topología por capas** que reemplaza al árbol plano migrado. La v2.1 añadió la separación entre **arquitectura de capacidades** y **registry operativo**. La v2.2 registra la reestructuración física ejecutada y deja explícitos los pendientes de implementación que restan.
+Este documento es el handoff de arquitectura para el repositorio `systems-engineering-framework-agent`. Fija qué se construye, qué se instala y qué queda fuera, y registra la frontera que impide que la herramienta toque datos de proyecto. La v2.0 adoptó la **topología por capas**; la v2.1 añadió la separación entre **arquitectura de capacidades** y **registry operativo**; la v2.2 registró la reestructuración física ejecutada; la **v3.0 concilia la arquitectura con PRD 1 aprobado** (scaffolder one-shot, distribución pipx, propiedad del consumidor, registry manual).
 
 ## Autoridad y ruta de revisión
 
-- **Autoridad de la decisión**: la persona que lidera el producto. Este documento registra decisiones ya adoptadas; no abre nuevas bifurcaciones.
-- **Estado**: `adoptada` (v2.2). Supersede la v2.1 y anteriores. Cambios posteriores se tramitan por revisión normal del repositorio de producto.
-- **Ruta de revisión**: este documento es la fuente de referencia del árbol vigente; los artefactos de implementación que se deriven (código del instalador, plantillas del adaptador, esquema de manifiesto, generador del registry) se revisan contra lo aquí fijado.
-- **Qué revisar primero**: la decisión ejecutiva, la separación arquitectura de capacidades vs registry operativo (sección 3 y `docs/decisions/skill-artifacts.md`), la topología (sección 4), los árboles fuente e instalado (sección 5), la frontera de propiedad (sección 6) y el registro de transición y pendientes (secciones 12 y 15).
+- **Autoridad de requisitos**: PRD 1, aprobado. Este documento registra la arquitectura conciliada con él; no reabre decisiones del PRD.
+- **Estado**: `adoptada` (v3.0). Supersede la v2.2 y anteriores en lo que contradiga PRD 1. Cambios posteriores se tramitan por revisión normal del repositorio de producto.
+- **Ruta de revisión**: los artefactos de implementación que se deriven (paquete `se_agent`, payload del adaptador, verificaciones de CI) se revisan contra PRD 1 y este documento.
+- **Qué revisar primero**: la decisión ejecutiva, la separación arquitectura de capacidades vs registry operativo (sección 3 y `docs/decisions/skill-artifacts.md`), la topología (sección 4), los árboles fuente e instalado (sección 5), la frontera de escritura y propiedad (sección 6), los riesgos (sección 13) y los pendientes de implementación (sección 14).
 
 ## 1. Contexto: tres subsistemas y alcance del MVP
 
@@ -54,22 +59,23 @@ El sistema completo se compone de tres subsistemas con responsabilidades distint
 
 | Subsistema | Ubicación lógica | Responsabilidad | ¿En el MVP? |
 | --- | --- | --- | --- |
-| Framework (dominio) | `framework/marco/` (instalado como `marco/`) | Proceso de ingeniería: fases `F0`–`F8`, reviews, baselines, glosario, reglas. | Sí (empaquetado y gestionado). |
-| Agente (framework-agent) | repo de producto | Runtime/orquestador + adaptador Codex que ejecuta el proceso según el contrato de runtime y el registry operativo. | Sí (es el producto). |
+| Framework (dominio) | `framework/marco/` (instalado como `marco/`) | Proceso de ingeniería: fases `F0`–`F8`, reviews, baselines, glosario, reglas. | Sí (empaquetado en el payload). |
+| Agente/runtime Codex | `runtime/` + `adapters/codex/` (instalados por `se-agent`) | Contrato, skills y artefactos que Codex usa para ejecutar el proceso; el scaffolder solo los instala. | Sí (implementación pendiente). |
 | Proyecto consumidor | `proyecto/` en el destino | Instancia viva: estado, hitos, registros, entregables, evidencia. | No (es el fixture de aceptación; el producto no lo gestiona). |
 
-> El producto `systems-engineering-framework-agent` es la unión de **framework + agente**. El proyecto consumidor no se empaqueta ni se migra; el producto lo respeta como intocable durante `init`/`update`/`doctor`.
+> El producto `systems-engineering-framework-agent` reúne **framework + runtime/agente + scaffolder `se-agent`**. El proyecto consumidor no se empaqueta ni se migra; el producto lo respeta como intocable durante `init` (y en cualquier otro comando, porque solo existen `init` y `--version`).
 
 ## 2. Alcance del producto y no-objetivos
 
-### Alcance (MVP)
+### Alcance (MVP, según PRD 1)
 
-- Empaquetar framework + agente en un único repo, evolucionando juntos.
-- Distribuir como ejecutable portátil de Windows vía GitHub Releases.
-- Instalar y actualizar los archivos gestionados en un proyecto destino.
-- Generar artefactos del adaptador Codex (skills, agentes, configuración).
-- Verificar integridad con manifiesto + SHA-256.
-- Instalar/actualizar de forma transaccional y con cierre seguro ante fallo (fail-closed).
+- Paquete Python `se_agent` con CLI `se-agent`, distribuible vía `pipx` (ZIP del tag de GitHub).
+- Payload completo del marco + dominio instalado en el destino (PRD 1, §7).
+- Contrato `AGENTS.md` canónico instalado en la raíz del destino.
+- Registry de skills mantenido manualmente, con verificación de coherencia bidireccional en CI.
+- Una skill F0 **funcional** en runtime.
+- Artefactos del adaptador Codex (`.codex/config.toml`, `.codex/agents/*.toml`) instalados en `.codex/`.
+- Protocolo de colisiones, frontera de escritura estricta y preflight antes de la primera escritura.
 
 ### No-objetivos (fuera del MVP)
 
@@ -77,9 +83,11 @@ El sistema completo se compone de tres subsistemas con responsabilidades distint
 - Migraciones de proyectos existentes.
 - Gestionar o modificar `proyecto/` o cualquier dato de proyecto.
 - Submódulos de Git.
-- Firma de código (SHA-256 es integridad, no autoría).
-- Desinstalación (`uninstall`), salvo que se etiquete explícitamente como pendiente.
-- Más de un harness en el MVP: el dominio y los contratos runtime son harness-neutrales, pero el único adaptador inicial es Codex.
+- Manifiesto, hashes SHA-256, `.framework-agent/`, `update`, `doctor`, `uninstall`, detección de deriva, copias gestionadas read-only.
+- Generador del registry (comando de build); el registry se edita a mano y CI solo verifica.
+- CI que modifica el repositorio.
+- PyPI y EXE portátil de Windows.
+- Más de un harness: el dominio y los contratos runtime son harness-neutral, pero el único adaptador es Codex.
 
 ## 3. Capas y dirección de dependencias
 
@@ -90,49 +98,47 @@ dominio (framework/marco/ + framework/guias/skill-architecture.md)
    ↑ autoridad de significado
 contrato de runtime (runtime/AGENTS.md) + contratos harness-neutral (runtime/agents/)
    ↑ comportamiento portable
-registry operativo (runtime/catalogo/skill-registry.md)
+registry operativo (runtime/catalogo/skill-registry.md, mantenido a mano)
    ↑ disponibilidad de skills instaladas
 adaptador Codex (adapters/codex/ → skills · agentes · config)
    ↑ traducción a artefactos ejecutables
-agente (installer/windows/ → runtime del producto)
-   ↑ ejecución
-superficie gestionada instalada (marco/ · AGENTS.md · catalogo/skill-registry.md · .agents/ · .codex/ · .framework-agent/)
-   ↑ lectura/escritura acotada
-proyecto consumidor (proyecto/) — solo lectura por el runtime; intocable por init/update/doctor
+scaffolder se-agent (paquete se_agent/ → instalación one-shot del payload)
+   ↑ ejecución acotada al write-set
+write-set instalado, propiedad del consumidor (marco/ · AGENTS.md · catalogo/skill-registry.md · .agents/ · .codex/)
+   ↑ lectura/uso libre
+proyecto consumidor (proyecto/) — intocable por la herramienta
 ```
 
 | Capa | Es autoridad sobre | No es autoridad sobre |
 | --- | --- | --- |
 | Dominio (`framework/marco/` + `framework/guias/skill-architecture.md`) | Significado del proceso y arquitectura de capacidades | Ejecución, herramientas, disponibilidad runtime |
 | Contrato de runtime (`runtime/AGENTS.md`) y contratos harness-neutral (`runtime/agents/`) | Comportamiento portable del agente | Significado del dominio |
-| Registry operativo (`runtime/catalogo/skill-registry.md`) | Inventario de skills disponibles y accesibles | Significado del dominio, algoritmo de routing, guardrails |
+| Registry operativo (`runtime/catalogo/skill-registry.md`) | Inventario de skills disponibles y accesibles (mantenido a mano) | Significado del dominio, algoritmo de routing, guardrails |
 | Adaptador Codex (`adapters/codex/`) | Artefactos ejecutables Codex | Significado, arquitectura de capacidades |
-| Agente (`installer/windows/`) | Instalar/actualizar superficie gestionada | Datos de proyecto |
+| Scaffolder `se-agent` | Instalar el write-set declarado, una sola vez | Datos de proyecto, contenido fuera del write-set |
 | Proyecto consumidor | Hechos del proyecto | Proceso (lo respeta) |
 
 > El dominio no importa Codex; el adaptador sí importa el dominio. Esta frontera se conserva de `docs/architecture/domain-harness-boundary.md`.
 
-## 4. Topología: repo fuente canónico vs repo consumidor instalado
+## 4. Topología: repo fuente canónico vs proyecto consumidor instalado
 
 Existen **dos** repositorios con roles distintos, y **una** autoridad de fuente.
 
 | Repo | Rol | Contenido |
 | --- | --- | --- |
-| `systems-engineering-framework-agent` | Fuente canónica del producto | `framework/` (`marco/` + `guias/`), `runtime/` (`AGENTS.md`, `catalogo/skill-registry.md`, `skills/`, `agents/`), `adapters/codex/`, `installer/windows/`, `tests/`, `release/`, `docs/`. |
-| Proyecto destino (p. ej. `proyecto-base`) | Consumidor/instalado | Copias gestionadas (`marco/`, `AGENTS.md`, `catalogo/skill-registry.md`, `.agents/skills/`, `.codex/`, `.framework-agent/`) + `proyecto/` intocable. |
+| `systems-engineering-framework-agent` | Fuente canónica del producto | `framework/` (`marco/` + `guias/`), `runtime/` (`AGENTS.md`, `catalogo/skill-registry.md`, `skills/`, `agents/`), `adapters/codex/`, `tests/`, `release/`, `docs/` (incluye `docs/prd/`). |
+| Proyecto destino (p. ej. `proyecto-base`) | Consumidor/instalado | Archivos instalados **propiedad del consumidor** (`marco/`, `AGENTS.md`, `catalogo/skill-registry.md`, `.agents/skills/`, `.codex/`) + `proyecto/` intocable. |
 
 Reglas:
 
-- **Sin submódulos.** El repo de producto es un único repositorio; el consumidor recibe copias gestionadas por el agente, no referencias Git.
-- **Una única autoridad de fuente.** El marco, la arquitectura de capacidades, el registry operativo y el contrato de runtime se editan solo en el repo de producto. En el consumidor son copias instaladas; no existe una segunda autoridad editable.
-- **Un contrato semántico de runtime.** `runtime/AGENTS.md` (fuente en el repo de producto) y el `AGENTS.md` instalado en el consumidor representan el **mismo** contrato semántico, no dos contratos editados por separado. La deriva local en el consumidor bloquea la actualización (sección 6).
+- **Sin submódulos.** El repo de producto es un único repositorio; el consumidor recibe archivos instalados por `se-agent init`, no referencias Git.
+- **Una única autoridad de fuente.** El marco, la arquitectura de capacidades, el registry operativo y el contrato de runtime se editan solo en el repo de producto. En el consumidor son archivos instalados; no existe una segunda autoridad editable del producto.
+- **Un contrato semántico de runtime.** `runtime/AGENTS.md` (fuente en el repo de producto) y el `AGENTS.md` instalado en el consumidor representan el **mismo** contrato semántico, no dos contratos editados por separado. Tras `init`, la copia es del consumidor; una re-instalación trata las diferencias como colisiones explícitas (PRD 1, §9), no como "deriva" que bloquea nada.
 - **Sin `AGENTS.md` en la raíz del producto.** La única fuente del contrato instalable vive en `runtime/AGENTS.md`; el `AGENTS.md` en raíz aparece únicamente como artefacto instalado en el consumidor.
 
-> Nota sobre el diagrama: `docs/history/diagrama-mvp.png` es **ideación histórica** del arnés y contiene preguntas ya resueltas. Queda **superado** donde sus decisiones difieran de las aquí adoptadas (distribución EXE portátil vía GitHub Releases, `marco/` gestionado, `catalogo/skill-registry.md` gestionado, manifiesto/hashes, sin submódulos, `proyecto-base` como fixture). No se usa como referencia final.
+> Nota sobre el diagrama: `docs/history/diagrama-mvp.png` es **ideación histórica** del arnés y contiene preguntas ya resueltas. Queda **superado** donde sus decisiones difieran de PRD 1 y de este documento. No se usa como referencia final.
 
-## 5. Árboles: fuente e instalado (adoptado y ejecutado)
-
-La reestructuración física está ejecutada; no existe un árbol plano transitorio. El árbol fuente vigente es el árbol por capas adoptado, y el árbol instalado describe la superficie gestionada en el proyecto destino.
+## 5. Árboles: fuente e instalado
 
 ### 5.1 Árbol fuente (vigente)
 
@@ -145,202 +151,142 @@ systems-engineering-framework-agent/
 │       └── project-init.md             # guía de arranque (curada desde el histórico)
 ├── runtime/
 │   ├── AGENTS.md                       # única fuente del contrato instalable (no hay AGENTS.md en raíz)
-│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (vacío por ahora)
-│   ├── agents/                         # contratos runtime harness-neutral
+│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (skill F0 pendiente)
+│   ├── agents/                         # contratos runtime harness-neutral (sin destino de instalación definido)
 │   └── catalogo/
-│       └── skill-registry.md           # registry operativo (bootstrap 0 skills) → se instala como catalogo/skill-registry.md
+│       └── skill-registry.md           # registry operativo (bootstrap 0 skills, manual) → catalogo/skill-registry.md
 ├── adapters/
-│   └── codex/                          # lo específico de Codex (config + agentes)
+│   └── codex/                          # artefactos Codex (por crear): config.toml + agents/*.toml
 ├── installer/
-│   └── windows/                        # init/update/doctor/version + empaquetado portable
+│   └── windows/                        # OBSOLETO (enfoque EXE portátil retirado por PRD 1)
 ├── tests/
 │   ├── unit/
 │   ├── integration/
 │   └── fixtures/
-├── release/                            # fuentes de manifiesto/hashes/notas/config de publicación
+├── release/                            # fuentes de publicación (tag SemVer → ZIP)
 ├── docs/
 │   ├── architecture/
 │   ├── decisions/
 │   ├── guides/
+│   ├── prd/                            # PRD 1 (autoridad de requisitos del MVP)
 │   └── history/                        # deprecated, histórico, no autoritativo
-├── dist/                               # generado, NO versionado (outputs de release/binario)
+├── dist/                               # generado, NO versionado
 └── .gitignore
 ```
 
 > `.atl/` (índice técnico del harness) es solo desarrollo, está en `.gitignore` y no forma parte del árbol empaquetado.
 
-> `release/` contiene las **fuentes** de manifiesto, hashes, notas y configuración de publicación; los outputs generados (binario, manifiesto resuelto, hashes de release) se escriben en `dist/` y no se versionan.
+> El paquete Python `se_agent` (código de la CLI) no existe todavía; su ubicación interna se define al implementarlo y no altera las rutas canónicas del payload.
 
 ### 5.2 Árbol instalado (proyecto destino)
 
 ```text
 <proyecto-destino>/
-├── AGENTS.md                          # instalado (copia gestionada de runtime/AGENTS.md)
-├── marco/                             # instalado, solo lectura (copia gestionada de framework/marco/)
+├── AGENTS.md                          # instalado (copia exacta de runtime/AGENTS.md; propiedad del consumidor)
+├── marco/                             # instalado (copia recursiva de framework/marco/; propiedad del consumidor)
 ├── catalogo/
-│   └── skill-registry.md              # instalado, solo lectura (copia gestionada de runtime/catalogo/skill-registry.md)
-├── .agents/skills/<skill>/SKILL.md    # instalado (gestionado; desde runtime/skills/)
-├── .codex/agents/*.toml               # instalado (gestionado; desde adapters/codex/)
-├── .codex/config.toml                 # instalado (gestionado; desde adapters/codex/)
-├── .framework-agent/
-│   ├── manifest.json                  # versión instalada + hashes (se escribe al final)
-│   └── hashes.sha256                  # integridad de archivos gestionados
-└── proyecto/                          # NO gestionado; permanece intacto
+│   └── skill-registry.md              # instalado (copia exacta del registry operativo; propiedad del consumidor)
+├── .agents/skills/<skill>/SKILL.md    # instalado (desde runtime/skills/; propiedad del consumidor)
+├── .codex/agents/*.toml               # instalado (desde adapters/codex/; propiedad del consumidor)
+├── .codex/config.toml                 # instalado (desde adapters/codex/; propiedad del consumidor)
+└── proyecto/                          # NO gestionado; permanece byte a byte intacto
 ```
 
-## 6. Contrato de propiedad gestionada
+> No existe `.framework-agent/`: PRD 1 elimina el manifiesto y los hashes. No se escribe ningún archivo de estado, caché ni lockfile.
 
-El producto es dueño exclusivo de un conjunto cerrado de archivos. Fuera de ese conjunto, no escribe.
+## 6. Frontera de escritura y propiedad
 
-| Superficie gestionada | Rol en destino | Comportamiento ante deriva local |
-| --- | --- | --- |
-| `marco/` | Copia instalada de `framework/marco/`, solo lectura para el agente | Deriva → bloquea actualización |
-| `AGENTS.md` (raíz) | Copia instalada de `runtime/AGENTS.md`; **propiedad total** del producto | Deriva (edición local) → bloquea actualización |
-| `catalogo/skill-registry.md` | Copia instalada read-only de `runtime/catalogo/skill-registry.md` (registry operativo) | Deriva → bloquea actualización |
-| `.agents/skills/<skill>/SKILL.md` | Copias instaladas de skills Codex (desde `runtime/skills/`) | Deriva → bloquea actualización |
-| `.codex/agents/*.toml`, `.codex/config.toml` | Artefactos del adaptador (desde `adapters/codex/`) | Deriva → bloquea actualización |
-| `.framework-agent/manifest.json` + `hashes.sha256` | Estado de instalación; lo escribe el agente al final | No editable por el usuario; se regenera |
+Tras `init` exitoso, el consumidor es dueño absoluto de todo lo instalado. La herramienta no mantiene, vigila ni actualiza nada después.
 
-Superficie prohibida (nunca se accede ni modifica durante `init`/`update`/`doctor`):
+Reglas duras (PRD 1, §8; verificables por test):
+
+- **Lista blanca.** Solo los destinos del payload (PRD 1, §7) pueden crearse o sobrescribirse: `marco/`, `AGENTS.md`, `catalogo/skill-registry.md`, `.agents/skills/<skill>/SKILL.md`, `.codex/config.toml`, `.codex/agents/*.toml`.
+- **Preflight total.** Antes de la primera escritura se calcula y valida el plan completo: destino, resolución segura de rutas, colisiones. Cualquier fallo ⇒ **cero escrituras**.
+- **Colisiones.** Interactivo: se listan todas y se pregunta `[y/N]`; cualquier otra respuesta o EOF aborta sin escribir. No interactivo: aborta y sugiere `--force`. Con `--force` se sobrescriben solo las colisiones del write-set.
+- **`proyecto/` intocable.** Ninguna operación, en ningún modo (incluido `--force`), crea, modifica ni elimina nada bajo `proyecto/`.
+- **Resolución segura.** Se rechaza con error duro: `..` que escape de la raíz destino, rutas absolutas fuera del target y symlinks cuyo objetivo quede fuera del árbol destino.
+- **Nunca se elimina ni "ordena"** contenido fuera del write-set.
+- **Fallo a mitad de escritura:** la herramienta se detiene en el primer error, no revierte (lo escrito ya es del consumidor), reporta rutas escritas y pendientes, y termina con código distinto de cero.
+
+Superficie prohibida (nunca se accede para escribir):
 
 - `proyecto/` y todo su contenido.
 - Registros, hitos, entregables, evidencia y esquemas de proyecto.
-- Cualquier archivo fuera de la superficie gestionada.
-
-Reglas duras:
-
-- **Deriva local bloquea la actualización.** Si un archivo gestionado difiere de su hash instalado, `update` se detiene y reporta las diferencias. **No hay sobrescritura silenciosa.**
-- **Propiedad total de `AGENTS.md`.** El producto reemplaza y mantiene el `AGENTS.md` de raíz del consumidor; no coexiste con un `AGENTS.md` editado a mano.
-- **Un solo contrato semántico.** La fuente (`runtime/AGENTS.md`) y la copia instalada representan el mismo contrato; la deriva es un error a resolver, no una segunda autoridad.
-- **Registry operativo read-only.** `catalogo/skill-registry.md` se instala como copia gestionada de solo lectura del registry operativo (`runtime/catalogo/skill-registry.md`); no es una segunda fuente editable.
+- Cualquier archivo fuera del write-set.
 
 ## 7. Distribución y comandos
 
-- **Formato**: ejecutable portátil de Windows, publicado en GitHub Releases. (El nombre final del binario y la organización de GitHub quedan **por definir**; no se fijan aquí.)
-- **Prerrequisito**: Codex Desktop está **preinstalado y autenticado** en la máquina destino; el producto no instala ni autentica Codex. (La versión mínima de Codex queda **por definir**.)
-- **Firma**: no hay infraestructura de firma de código en el MVP; la integridad se cubre solo con SHA-256.
-
-La superficie de comandos listada a continuación es la **definición del MVP**; su implementación en `installer/windows/` es **pendiente** (sección 15).
+- **Formato**: paquete Python `se_agent` (CLI `se-agent`, Python `>=3.12`), instalable con `pipx` desde el ZIP que GitHub expone automáticamente para cada tag SemVer **inmutable**. **Sin PyPI y sin EXE portátil en el MVP.**
+- **Coherencia de versión**: el tag `vX.Y.Z`, la versión de `pyproject.toml` y la salida de `se-agent --version` coinciden.
+- **Prerrequisito**: Codex está **preinstalado y autenticado** en la máquina destino; el producto no instala ni autentica Codex. (La versión mínima de Codex queda **por definir**.)
+- **Comandos en MVP**:
 
 | Comando | Comportamiento |
 | --- | --- |
-| `init --harness codex --target .` | Instala la superficie gestionada en el destino y escribe el manifiesto. |
-| `update` | Actualiza transaccionalmente la superficie gestionada; verifica integridad y deriva. |
-| `doctor` | Verifica superficie gestionada, manifiesto, hashes y presencia de Codex Desktop. |
-| `version` | Imprime la versión del producto. |
-| `uninstall` | **Pendiente/futuro**; no forma parte del MVP. |
+| `se-agent init --harness codex --target .` | Preflight (destino, rutas, colisiones) e instala el write-set (PRD 1, §7). Sin manifiesto ni estado adicional. |
+| `se-agent --version` | Imprime la versión SemVer, idéntica al tag y a `pyproject.toml`. |
 
-## 8. Instalación y actualización: seguridad transaccional
+- **No existen en el MVP**: `update`, `doctor`, `uninstall`, migraciones, generación de registry. El ciclo de vida gestionado (actualización con copias administradas) queda como **propuesta futura** a tratar en su propio PRD; nada del MVP lo implementa parcialmente.
+- La organización/URL real de GitHub queda por definir (seguimiento abierto, PRD 1 §12).
 
-`update` (y la fase de reemplazo de `init`) sigue una secuencia fail-closed:
-
-1. **Descarga por etapas** a un directorio temporal de staging; nunca se escribe directamente sobre los archivos gestionados.
-2. **Verificación de integridad** SHA-256 de los artefactos en staging contra el manifiesto de la release.
-3. **Chequeo de deriva** de los archivos gestionados instalados contra el manifiesto instalado. Si hay deriva local → **bloquear** y reportar; sin sobrescritura silenciosa.
-4. **Plan**: calcular el conjunto exacto de archivos a reemplazar (solo superficie gestionada).
-5. **Reemplazo acotado**: reemplazar únicamente los archivos gestionados (vía staging + intercambio atómico o reemplazo por archivo).
-6. **Validación**: re-hashear los archivos instalados y verificar coincidencia con el manifiesto.
-7. **Escribir el manifiesto al final** (`.framework-agent/manifest.json` + `hashes.sha256`) como último paso de éxito.
-8. **Fail-closed**: ante cualquier fallo, dejar el estado previo intacto (o revertir) y reportar el error. Nunca dejar una instalación a medias marcada como válida.
-
-Clarificación de integridad:
-
-- **SHA-256 verifica integridad** (que los bytes no se corrompieron ni cambiaron respecto del manifiesto de la release).
-- **SHA-256 no es firma de código.** No establece quién produjo el binario ni protege contra un actor que reemplace binario y manifiesto juntos. Hasta que exista infraestructura de firma (por definir), este límite se documenta como riesgo residual.
-
-## 9. Ejemplo de manifiesto y artefactos de release
-
-### 9.1 Manifiesto (ejemplo ilustrativo)
-
-```json
-{
-  "schema": "framework-agent.manifest/v1",
-  "product": "systems-engineering-framework-agent",
-  "version": "0.1.0",
-  "released_at": "YYYY-MM-DD",
-  "harness": "codex",
-  "codex_min_version": null,
-  "managed_files": [
-    { "path": "AGENTS.md", "sha256": "<hash>" },
-    { "path": "catalogo/skill-registry.md", "sha256": "<hash>" },
-    { "path": "marco/fases/fase_0_concepto_y_factibilidad.md", "sha256": "<hash>" }
-  ]
-}
-```
-
-> `version` y `released_at` son ilustrativos. `codex_min_version: null` marca que la versión mínima de Codex está por definir. Las rutas de `managed_files` son las **rutas instaladas** (p. ej. `marco/`, no `framework/marco/`).
-
-### 9.2 Artefactos de release
+## 8. Publicación
 
 | Artefacto | Rol |
 | --- | --- |
-| `<binario>.exe` | Ejecutable portátil de Windows (nombre por definir). |
-| `manifest.json` | Versión y hashes de los archivos gestionados. |
-| `hashes.sha256` | Lista `sha256  ruta` de los artefactos de la release. |
-| `NOTES.md` | Notas de release y cambios. |
+| Tag `vX.Y.Z` inmutable | Referencia de versión; el ZIP que GitHub expone automáticamente es el artefacto de instalación vía `pipx`. |
+| `NOTES.md` (opcional) | Notas de release. |
 
-> Las **fuentes** de estos artefactos viven en `release/`; los outputs generados se escriben en `dist/` y no se versionan.
+No hay manifiesto, ni `hashes.sha256`, ni binario EXE. `release/` conserva las fuentes de notas/configuración de publicación; los outputs generados van a `dist/` y no se versionan.
 
-## 10. Responsabilidad del adaptador Codex y frontera harness-neutral
+## 9. Responsabilidad del adaptador Codex y frontera harness-neutral
 
-- **Adaptador**: traduce el contrato de runtime (`runtime/AGENTS.md`) y el registry operativo (`runtime/catalogo/skill-registry.md`) a artefactos Codex (`.agents/skills/`, `.codex/agents/*.toml`, `.codex/config.toml`). Es un mapeo ejecutable, nunca una autoridad de significado. La arquitectura de capacidades (`framework/guias/skill-architecture.md`) guía el diseño, no se empaqueta ni se instala.
-- **Separación runtime/adaptador**: `runtime/agents/` contiene contratos runtime **harness-neutrales**; `adapters/codex/` contiene solo lo específico de Codex. El dominio no depende de ninguno de los dos.
+- **Adaptador**: traduce el contrato de runtime (`runtime/AGENTS.md`) y el registry operativo (`runtime/catalogo/skill-registry.md`) a artefactos Codex (`.agents/skills/`, `.codex/agents/*.toml`, `.codex/config.toml`). Es un mapeo ejecutable, nunca una autoridad de significado. La arquitectura de capacidades (`framework/guias/skill-architecture.md`) guía el diseño; no se empaqueta ni se instala.
+- **Separación runtime/adaptador**: `runtime/agents/` contiene contratos runtime **harness-neutral**; `adapters/codex/` contiene solo lo específico de Codex. El dominio no depende de ninguno de los dos.
 - **Progressive disclosure**: las skills se cargan en tres niveles — metadata (`name`/`description`), instrucciones (`SKILL.md`) y recursos bajo demanda — para reducir consumo de contexto.
-- **Frontera de dominio**: el dominio (`framework/marco/`) permanece harness-neutral. Codex no evalúa disparadores de fase nativamente; el agente lee el estado del proyecto, selecciona la capacidad según la arquitectura de capacidades (`framework/guias/skill-architecture.md`) durante el diseño y, en runtime, resuelve/carga solo desde el registry operativo + metadata/SKILL. Ningún artefacto Codex redefine el dominio.
+- **Frontera de dominio**: el dominio (`framework/marco/`) permanece harness-neutral. Codex no evalúa disparadores de fase nativamente; el agente lee el estado del proyecto, selecciona la capacidad según la arquitectura de capacidades durante el diseño y, en runtime, resuelve/carga solo desde el registry operativo + metadata/SKILL. Ningún artefacto Codex redefine el dominio.
 - **No duplicar reglas de dominio en TOML**: la configuración Codex expone mecanismos, no re-escribe el proceso.
 
-## 11. Slice vertical del MVP y criterios de aceptación medibles
+## 10. Slice vertical del MVP
 
-### Slice vertical
+El slice vertical y los criterios de aceptación medibles del MVP están definidos en **PRD 1** (§3, §5, §10) y son la autoridad. Resumen de referencia:
 
-1. Un contrato de fase canónico (p. ej. `F0`) bajo `framework/marco/fases/`.
-2. Una arquitectura de capacidades bajo `framework/guias/skill-architecture.md`.
-3. Una skill de fase bajo `runtime/skills/`, con frontmatter que alimenta el registry operativo.
-4. Un registry operativo generado y versionado en `runtime/catalogo/skill-registry.md` que CI valida contra `runtime/skills/`.
-5. Un adaptador que genera `.codex/config.toml` + un agente, desde `adapters/codex/`.
-6. `init --harness codex --target .` instala la superficie gestionada y escribe el manifiesto.
-7. `update` corre transaccionalmente y deja `proyecto/` byte a byte sin cambios.
+1. Paquete Python `se_agent` con CLI `se-agent`, distribuible vía `pipx`.
+2. Payload completo instalado en el destino (PRD 1, §7).
+3. Contrato `AGENTS.md` canónico en la raíz del destino.
+4. Registry mantenido manualmente + verificación de coherencia bidireccional en CI.
+5. Una skill F0 **funcional** (no placeholder), conforme a `framework/guias/skill-architecture.md` (`f0_factibilidad`), `AGENTS.md` y `marco/fases/fase_0_concepto_y_factibilidad.md`.
+6. Artefactos del adaptador Codex en `.codex/`.
+7. Protocolo de colisiones, frontera de escritura estricta y preflight (PRD 1, §8–9).
 
-### Criterios de aceptación medibles
+La verificación detallada de cada criterio (AC-1…AC-12) vive en PRD 1, §10; este documento no duplica ni altera esa lista.
 
-- [ ] `init` produce la superficie gestionada y el manifiesto; `doctor` pasa sin observaciones.
-- [ ] `update` sin deriva local actualiza la versión del manifiesto al final.
-- [ ] `update` con deriva local en un archivo gestionado **bloquea** y reporta las diferencias; no sobrescribe.
-- [ ] `update` con SHA-256 que no coincide **falla cerrado** y deja los archivos gestionados previos intactos.
-- [ ] `proyecto/` permanece **byte a byte idéntico** durante `update`: se calcula un hash recursivo del árbol `proyecto/` antes y después y se exige igualdad.
-- [ ] `doctor` detecta Codex Desktop ausente y lo reporta.
-- [ ] Existe un único contrato semántico de `AGENTS.md`; la copia instalada es idéntica a la fuente `runtime/AGENTS.md`.
-- [ ] `catalogo/skill-registry.md` se instala como copia gestionada read-only desde `runtime/catalogo/skill-registry.md`.
-- [ ] El registry operativo generado coincide con `runtime/skills/`; CI falla si hay deriva.
-- [ ] `doctor` valida registry instalado ↔ skills instaladas ↔ manifiesto/hashes.
+## 11. Registro de transición ejecutada
 
-## 12. Registro de transición ejecutada
-
-La migración plana dejó los activos en el repositorio y la **transición al árbol por capas está ejecutada**. Quedó completado:
+La migración plana dejó los activos en el repositorio y la **transición al árbol por capas está ejecutada** (registro histórico conservado de la v2.2). Quedó completado:
 
 - [x] Preservar el trabajo local (sin operaciones destructivas).
 - [x] Reubicar el dominio `marco/` → `framework/marco/` y situar las guías canónicas del framework en `framework/guias/` (separadas de `docs/history/`).
 - [x] Separar arquitectura de capacidades del registry operativo: `catalogo/skill-registry.md` → `framework/guias/skill-architecture.md`; curar `docs/history/guias/project-init.md` → `framework/guias/project-init.md`. `framework/guias/` **no** se instala en consumidores.
-- [x] Crear `runtime/catalogo/skill-registry.md` como bootstrap del registry operativo (0 skills). El `catalogo/skill-registry.md` de la raíz del producto dejó de existir como fuente.
-- [x] Reubicar el contrato de runtime `AGENTS.md` raíz → `runtime/AGENTS.md`, de modo que **no queda** `AGENTS.md` en la raíz del producto.
-- [x] Reorganizar skills y contratos runtime: `skills/` → `runtime/skills/`; `agent/` → `runtime/agents/` (contratos harness-neutrales).
+- [x] Crear `runtime/catalogo/skill-registry.md` como bootstrap del registry operativo (0 skills).
+- [x] Reubicar el contrato de runtime `AGENTS.md` raíz → `runtime/AGENTS.md`.
+- [x] Reorganizar skills y contratos runtime: `skills/` → `runtime/skills/`; `agent/` → `runtime/agents/`.
 - [x] Separar lo específico de Codex: `adapter/codex/` → `adapters/codex/`.
-- [x] Consolidar publicación: `manifest/` → `release/` (fuentes de manifiesto/hashes/notas/config); los outputs generados van a `dist/`, no versionados.
+- [x] Consolidar publicación en `release/`; outputs generados en `dist/`, no versionados.
 - [x] Estructurar tests como `tests/{unit,integration,fixtures}`.
-- [x] Marcar `docs/history/` como deprecated/no autoritativo y excluirlo de la generación.
-- [x] Confirmar sin submódulos: un único repo de producto; el consumidor recibe copias gestionadas.
+- [x] Marcar `docs/history/` como deprecated/no autoritativo.
+- [x] Confirmar sin submódulos: un único repo de producto.
 
-Verificación de fuente única (satisfecha para los artefactos ya presentes): el marco, la arquitectura de capacidades y `runtime/AGENTS.md` se editan **solo** en el repo de producto; el registry operativo nace en `runtime/catalogo/skill-registry.md`. En `proyecto-base`, `marco/`, `catalogo/skill-registry.md` y `AGENTS.md` pasan a ser copias instaladas gestionadas cuando `init` esté implementado (pendiente, sección 15).
+Con PRD 1 aprobado y esta v3.0, quedan además conciliados: distribución pipx/ZIP (sustituye EXE portátil), modelo one-shot con propiedad del consumidor (sustituye copias gestionadas/deriva), registry manual (sustituye registry generado) y write-set sin `.framework-agent/`.
 
-## 13. Recuperación de decisiones desde Engram (bootstrap, en su mayoría ejecutado)
+## 12. Recuperación de decisiones desde Engram (bootstrap, en su mayoría ejecutado)
 
-Esta sección registra el procedimiento de traspaso de memoria usado al iniciar este repositorio. Queda como referencia de bootstrap; no es una autoridad sobre las decisiones ya fijadas en este documento.
+Esta sección registra el procedimiento de traspaso de memoria usado al iniciar este repositorio. Queda como referencia de bootstrap; no es una autoridad sobre las decisiones ya fijadas en PRD 1 y en este documento.
 
-Engram conserva memoria por proyecto. Al abrir `systems-engineering-framework-agent`, el agente no debe asumir que las observaciones guardadas bajo `proyecto-base` aparecerán en el contexto del nuevo repo. El traspaso se realiza como una **recuperación curada**, no como una importación ciega ni como sustitución de los documentos versionados.
+Engram conserva memoria por proyecto. Al abrir `systems-engineering-framework-agent`, el agente no debe asumir que las observaciones guardadas bajo `proyecto-base` aparecerán en el contexto del nuevo repo. El traspaso se realiza como **recuperación curada**, no como una importación ciega ni como sustitución de los documentos versionados.
 
 ### Orden de autoridad durante el traspaso
 
-1. Este documento y las fuentes Markdown referenciadas son la autoridad.
+1. PRD 1 y las fuentes Markdown referenciadas son la autoridad.
 2. Las observaciones de Engram aportan resumen, justificación y punteros.
 3. Si una memoria contradice el Markdown vigente, se informa la discrepancia y prevalece Markdown.
 4. Las memorias originales de `proyecto-base` se conservan; no se eliminan ni se trasladan destructivamente.
@@ -353,7 +299,7 @@ Desde una sesión abierta en el nuevo repositorio:
 2. Buscar explícitamente en el proyecto de origen `proyecto-base` por nombre de producto, decisiones y claves de tema.
 3. Si el nombre de proyecto no resuelve o se desconoce, repetir la búsqueda con alcance de todos los proyectos.
 4. Recuperar el contenido completo de cada observación seleccionada por su identificador.
-5. Contrastar cada memoria con este documento y sus referencias antes de usarla.
+5. Contrastar cada memoria con PRD 1 y este documento antes de usarla.
 6. Guardar una memoria curada en `systems-engineering-framework-agent`, manteniendo la clave temática estable y registrando la procedencia (`proyecto-base`, ID de observación y ruta fuente).
 7. No copiar prompts, secretos, datos personales ni contenido obsoleto. Una memoria marcada para revisión se trata como contexto no confiable hasta verificarla.
 
@@ -389,7 +335,7 @@ mem_save(
 )
 ```
 
-> Los nombres y parámetros exactos de las herramientas deben confirmarse contra la integración Engram disponible en la sesión. Si Engram no está disponible, el arranque continúa con este documento y el Markdown versionado; la memoria es suplementaria.
+> Los nombres y parámetros exactos de las herramientas deben confirmarse contra la integración Engram disponible en la sesión. Si Engram no está disponible, el arranque continúa con PRD 1 y el Markdown versionado; la memoria es suplementaria.
 
 ### Memorias de arranque conocidas
 
@@ -398,7 +344,7 @@ mem_save(
 | `2162` | `architecture/mvp-distribution-boundaries` | Contexto de los tres subsistemas y fronteras iniciales. |
 | `2163` | `architecture/sharepoint-approval-sync` | Contexto futuro, fuera del MVP, sobre SharePoint y aprobaciones. |
 | `2164` | `architecture/mvp-scope` | Alcance exclusivo del MVP framework-agent. |
-| `2165` | `architecture/mvp-distribution-contract` | `marco/` gestionado, propiedad de `AGENTS.md` y EXE portátil. |
+| `2165` | `architecture/mvp-distribution-contract` | Contexto histórico del contrato de distribución (sustituido por PRD 1). |
 | `2166` | `architecture/repository-topology` | Separación entre repo de producto y `proyecto-base`. |
 | `2167` | `architecture/framework-agent-product` | Resumen del documento de arquitectura y sus pendientes. |
 | `2168` | `migration/framework-agent-source-state` | Estado Git verificado antes de iniciar la migración. |
@@ -406,61 +352,50 @@ mem_save(
 
 Los IDs son ayudas de bootstrap de la instancia Engram actual, no claves de dominio. La recuperación durable debe poder encontrarse también por `topic_key`, título, contenido y proyecto de origen.
 
-### Formato mínimo de la memoria curada
-
-```text
-What: decisión recuperada y verificada.
-Why: razón arquitectónica conservada.
-Where: rutas vigentes en el nuevo repositorio.
-Source: proyecto-base, observation_id=<id>,
-        implementacion/arquitectura-systems-engineering-framework-agent.md.
-Learned: límites, riesgos o pendientes todavía válidos.
-```
-
-## 14. Riesgos y mitigaciones
+## 13. Riesgos y mitigaciones
 
 | Riesgo | Mitigación |
 | --- | --- |
-| Deriva local en archivos gestionados | Chequeo de deriva; bloqueo y reporte; sin sobrescritura silenciosa. |
-| Corrupción o manipulación en tránsito | SHA-256 contra manifiesto; nota explícita de que es integridad, no autoría. |
-| Fallo a mitad de actualización | Transacción fail-closed; manifiesto se escribe al final; estado previo intacto. |
-| Fuentes canónicas duplicadas | Fuente única en el repo de producto; copias instaladas gestionadas. |
-| Escritura accidental en `proyecto/` | Frontera dura; prueba de aceptación byte a byte. |
-| Codex Desktop ausente | `doctor` lo detecta; prerrequisito documentado (preinstalado/autenticado). |
-| Suplantación sin firma de código | Residual hasta añadir firma; documentado como límite del MVP. |
-| Confundir árbol fuente con árbol instalado | Este documento fija ambos árboles (sección 5); el árbol fuente es la única autoridad editable. |
+| Sin deriva ni manifiesto, un consumidor puede editar archivos instalados y desalinearse del marco | Aceptado por diseño (one-shot): el proyecto es del consumidor. La re-instalación con `init` + colisiones explícitas es el único mecanismo de refresco. |
+| Escritura accidental en `proyecto/` o fuera del write-set | Frontera dura + preflight + tests (PRD 1, §8 y AC-4/5/8/9). |
+| Escapes de ruta vía symlink preexistente en el destino | RNF-3 del PRD + AC-8 con tests dedicados. |
+| `init` re-ejecutado dispara colisiones masivas | Comportamiento definido (listado completo, `[y/N]`, `--force`); sin diff ni migración en MVP. |
+| Fuentes canónicas duplicadas | Fuente única en el repo de producto; en el consumidor son archivos instalados, no segunda autoridad editable del producto. |
+| Codex Desktop ausente o versión insuficiente | Prerrequisito documentado (preinstalado/autenticado); versión mínima por definir. |
+| Confundir árbol fuente con árbol instalado | Este documento fija ambos árboles (sección 5); el árbol fuente es la única autoridad editable del producto. |
 
 ### Decisiones ya resueltas (no abiertas)
 
-Árbol por capas adoptado y ejecutado (`framework/`, `runtime/`, `adapters/codex/`, `installer/windows/`, `release/`, `tests/{unit,integration,fixtures}`), `runtime/AGENTS.md` como única fuente sin `AGENTS.md` en raíz, separación entre arquitectura de capacidades (`framework/guias/skill-architecture.md`) y registry operativo (`runtime/catalogo/skill-registry.md`), `catalogo/skill-registry.md` instalado read-only desde `runtime/catalogo/skill-registry.md`, `framework/guias/` no instalado, `docs/history/` deprecated, ejecutable portátil, GitHub Releases, `marco/` gestionado, propiedad total de `AGENTS.md`, manifiesto/hashes, comando `update`, sin migraciones de proyecto, sin submódulos, `proyecto-base` como fixture de aceptación, y RAG/SharePoint/Power Automate fuera del MVP.
+Árbol por capas ejecutado, `runtime/AGENTS.md` como única fuente sin `AGENTS.md` en raíz, separación entre arquitectura de capacidades (`framework/guias/skill-architecture.md`) y registry operativo (`runtime/catalogo/skill-registry.md`), `framework/guias/` no instalado, `docs/history/` deprecated, sin submódulos, `proyecto-base` como fixture de aceptación, y RAG/SharePoint/Power Automate fuera del MVP. Con PRD 1 aprobado, además: producto `se-agent`/`se_agent` en Python `>=3.12`, distribución `pipx` + ZIP de tag (sin PyPI ni EXE), modelo one-shot con propiedad del consumidor, sin manifiesto/hashes/`update`/`doctor`/deriva, registry manual con verificación CI, y `installer/windows/` obsoleto.
 
 ### Únicamente pendientes (no se inventan)
 
 | Dato pendiente | Por qué queda abierto |
 | --- | --- |
-| Lenguaje de implementación del agente | No se decide aquí. |
-| Organización de GitHub | No se fija. |
-| Nombre final del binario | Se usa `<binario>` hasta definirlo. |
-| Versión mínima de Codex | Se marca `null`/por definir. |
-| Infraestructura de firma de código | Fuera del MVP; SHA-256 es solo integridad. |
+| Implementación del paquete `se_agent` (CLI, payload, preflight) | Trabajo de implementación del MVP; no se decide aquí. |
+| Organización/URL de GitHub | Placeholder en PRD 1 (seguimiento abierto, §12). |
+| Destino de `runtime/agents/` (instalado o no) | Sin resolución; excluido del payload (seguimiento abierto, PRD 1 §12). |
+| Matriz de sistemas operativos objetivo | pipx es multiplataforma; por confirmar (seguimiento abierto, PRD 1 §12). |
+| Versión mínima de Codex | Prerrequisito documental ("preinstalado y autenticado"); se marca por definir. |
 
-## 15. Checklist de pendientes de implementación
+## 14. Pendientes de implementación
 
-- [ ] Poblar `runtime/skills/` con skills ejecutables (hoy vacío; el registry declara 0 skills).
-- [ ] Implementar el generador del registry operativo desde `runtime/skills/*/SKILL.md`.
-- [ ] Configurar CI para que falle si el registry operativo no coincide con `runtime/skills/`.
-- [ ] Implementar `init`, `update`, `doctor`, `version` en `installer/windows/` con la transacción fail-closed.
-- [ ] Implementar el adaptador Codex (`.codex/config.toml` + agentes/skills) en `adapters/codex/`.
-- [ ] Fijar el esquema de manifiesto (`framework-agent.manifest/v1`) y la generación de hashes.
-- [ ] Añadir las pruebas de comportamiento (selección de ruta, degradación, frontera) y la prueba byte a byte de `proyecto/`.
-- [ ] Validar `doctor`: registry instalado ↔ skills instaladas ↔ manifiesto/hashes.
-- [ ] Configurar el build y la publicación del EXE portátil en GitHub Releases.
+- [ ] Implementar el paquete `se_agent` con CLI `se-agent` (`init` y `--version`), preflight, protocolo de colisiones y frontera de escritura estricta (PRD 1, §5, §8–9).
+- [ ] Configurar el pipeline de publicación: tag SemVer inmutable → ZIP → `pipx`; coherencia de versión (PRD 1, AC-1/AC-2).
+- [ ] Poblar `runtime/skills/` con la skill F0 funcional y su entrada en el registry (PRD 1, AC-12).
+- [ ] Crear los artefactos del adaptador Codex en `adapters/codex/` (`.codex/config.toml` + agentes).
+- [ ] Implementar la verificación de coherencia bidireccional registry ↔ `runtime/skills/` en tests/CI (PRD 1, AC-10), sin generación del registry.
+- [ ] Añadir las pruebas de comportamiento (payload exacto, `proyecto/` byte a byte, write-set, escapes de ruta, colisiones) según PRD 1, §10.
+- [ ] Definir la organización/URL de GitHub y sustituir el placeholder de PRD 1.
+- [ ] Confirmar la matriz de sistemas operativos objetivo.
+- [ ] Decidir el destino de los contratos harness-neutral de `runtime/agents/` (instalados o no).
 
-## 16. Referencias (rutas relativas al repositorio)
+## 15. Referencias (rutas relativas al repositorio)
 
 Rutas presentes en el árbol vigente:
 
-- `../decisions/agents-contract.md` — decisión v2.1 del contrato único de `AGENTS.md`.
+- `../prd/prd-001-one-shot-codex-scaffolder.md` — PRD 1 (autoridad de requisitos del MVP).
+- `../decisions/agents-contract.md` — decisión del contrato único de `AGENTS.md`.
 - `../decisions/skill-artifacts.md` — decisión sobre arquitectura de capacidades vs registry operativo.
 - `../history/decisions/tradeoff-codex-pi.md` — análisis histórico Codex vs Pi (deprecated, no autoritativo).
 - `../architecture/orchestrator.md` — capas del orquestador (referencia de fronteras).
@@ -468,14 +403,13 @@ Rutas presentes en el árbol vigente:
 - `../architecture/memory.md` — política de persistencia/autoridad.
 - `../guides/quickstart.md` — flujo mínimo del orquestador.
 - `../history/README.md` — aviso de deprecación del histórico (no autoritativo).
-- `../history/diagrama-mvp.png` — ideación histórica (superada en lo que difiera de este documento).
 - `../../framework/guias/skill-architecture.md` — arquitectura de capacidades del framework (autoridad de significado; no se instala).
 - `../../framework/guias/project-init.md` — guía de arranque (curada desde el histórico).
 - `../../framework/marco/README.md` — contenido del dominio.
 - `../../runtime/AGENTS.md` — contrato de runtime canónico.
-- `../../runtime/catalogo/skill-registry.md` — registry operativo (bootstrap 0 skills; generador/CI pendiente).
+- `../../runtime/catalogo/skill-registry.md` — registry operativo (bootstrap 0 skills; mantenido a mano).
 - `../../README.md` — resumen del producto.
 
-`runtime/skills/` es la ubicación vigente de las skills ejecutables (hoy vacía) y no se lista como referencia individual.
+`runtime/skills/` es la ubicación vigente de las skills ejecutables (poblado pendiente) y no se lista como referencia individual.
 
 El estado autoritativo del proyecto vivo no vive en este repositorio: reside en el fixture `proyecto-base` (por ejemplo `proyecto/estado/proyecto_actual.md`, `proyecto/estado/estado_fases.md`, `proyecto/hitos/hito_aprobacion_trabajo.md`), y el producto lo respeta como intocable.

@@ -1,10 +1,12 @@
 ---
 document_type: arquitectura
 language: es
-version: 0.2
+version: 0.3
 status: propuesta
 ---
 # Arquitectura del orquestador
+
+> Conciliada con [PRD 1](../prd/prd-001-one-shot-codex-scaffolder.md) (aprobado): el producto es el paquete Python `se_agent` (CLI `se-agent`), scaffolder one-shot; el enfoque `installer/windows/` quedó obsoleto y el registry operativo se mantiene a mano con verificación CI.
 
 ## Propósito
 
@@ -16,20 +18,20 @@ Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como pr
 
 ## Capas y responsabilidades
 
-| Capa                      | Ubicación                             | Responsabilidad                                |
-| ------------------------- | -------------------------------------- | ---------------------------------------------- |
-| Dominio (marco)           | `framework/marco/` (instalado como `marco/`) | Proceso, fases, reviews, baselines, glosario   |
-| Instancia de proyecto     | `proyecto/` (en el proyecto destino) | Estado, hitos y registros autoritativos        |
-| Arquitectura de capacidades | `framework/guias/skill-architecture.md` | Qué asistencia existe y cuándo usarla (diseño) |
-| Registry operativo | `runtime/catalogo/skill-registry.md` (instalado como `catalogo/skill-registry.md`) | Qué skill está disponible en runtime |
-| Contratos canónicos      | fuente harness-neutral                 | Contrato entre dominio y ejecución            |
-| Skills de fase            | `runtime/skills/` (contratos ejecutables) | Procedimiento operativo por capacidad          |
-| Orquestador padre         | sesión padre                          | Leer estado, elegir skill, delegar, escribir   |
-| Subagentes                | subagentes                             | Trabajo aislado o paralelo acotado             |
-| Adaptador Codex           | `adapters/codex/`                      | Traducir contratos →`.agents/`, `.codex/` |
-| Integraciones MCP         | MCP                                    | Herramientas y memoria                         |
-| Memoria dual              | Markdown + Engram + RAG                | Persistencia autoritativa y suplementaria      |
-| Pruebas de comportamiento | `tests/{unit,integration,fixtures}`    | Validar selección, degradación y fronteras   |
+| Capa                        | Ubicación                                                                          | Responsabilidad                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Dominio (marco)             | `framework/marco/` (instalado como `marco/`)                                       | Proceso, fases, reviews, baselines, glosario                             |
+| Instancia de proyecto       | `proyecto/` (en el proyecto destino)                                               | Estado, hitos y registros autoritativos                                  |
+| Arquitectura de capacidades | `framework/guias/skill-architecture.md`                                            | Qué asistencia existe y cuándo usarla (diseño)                           |
+| Registry operativo          | `runtime/catalogo/skill-registry.md` (instalado como `catalogo/skill-registry.md`) | Qué skill está disponible en runtime (mantenido a mano; verificación CI) |
+| Contratos canónicos         | fuente harness-neutral                                                             | Contrato entre dominio y ejecución                                       |
+| Skills de fase              | `runtime/skills/` (contratos ejecutables)                                          | Procedimiento operativo por capacidad                                    |
+| Orquestador padre           | sesión padre                                                                       | Leer estado, elegir skill, delegar, escribir                             |
+| Subagentes                  | subagentes                                                                         | Trabajo aislado o paralelo acotado                                       |
+| Adaptador Codex             | `adapters/codex/`                                                                  | Traducir contratos →`.agents/`, `.codex/`                                |
+| Integraciones MCP           | MCP                                                                                | Herramientas y memoria                                                   |
+| Memoria dual                | Markdown + Engram + RAG                                                            | Persistencia autoritativa y suplementaria                                |
+| Pruebas de comportamiento   | `tests/{unit,integration,fixtures}`                                                | Validar selección, degradación y fronteras                               |
 
 ## Diagrama de capas
 
@@ -75,7 +77,7 @@ Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como pr
 
 Codex usa **progressive disclosure**: expone la metadata de una skill para que el agente decida si cargarla. Eso **no** significa que Codex evalúe nativamente los disparadores de fase de un YAML.
 
-| Responsabilidad                       | Quién la cumple             |
+| Responsabilidad                       | Quién la cumple              |
 | ------------------------------------- | ---------------------------- |
 | Exponer metadata de skill             | Adaptador Codex              |
 | Leer estado autoritativo del proyecto | Orquestador padre            |
@@ -86,10 +88,10 @@ Codex usa **progressive disclosure**: expone la metadata de una skill para que e
 
 ## Asignación de capacidades
 
-| Tipo de capacidad           | Default | Promoción a subagente solo si…                                                                                 |
+| Tipo de capacidad           | Default | Promoción a subagente solo si…                                                                                   |
 | --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| Asistencia de fase          | Skill   | — (es skill, no agente por defecto)                                                                             |
-| Transversal / tarea puntual | Inline  | hay aislamiento de contexto, especialización, frontera de herramienta segura o trabajo paralelo de solo lectura |
+| Asistencia de fase          | Skill   | — (es skill, no agente por defecto)                                                                              |
+| Transversal / tarea puntual | Inline  | hay aislamiento de contexto, especialización, frontera de herramienta segura o trabajo paralelo de solo lectura  |
 
 Candidatos iniciales de subagente (sin declarar subagente a toda capacidad transversal):
 
@@ -101,20 +103,20 @@ Candidatos iniciales de subagente (sin declarar subagente a toda capacidad trans
 
 ## Árbol fuente vs runtime instalado
 
-Separar los contratos fuente harness-neutral de los artefactos Codex generados/copiados. Existe **un único** contrato de runtime (`runtime/AGENTS.md`, instalado como `AGENTS.md`); el desarrollo del arnés es externo a la plantilla de runtime, se describe como estructura de implementación futura en `runtime/agents/`, `adapters/codex/` e `installer/windows/` y no es una elección que el orquestador deba hacer durante la operación.
+Separar los contratos fuente harness-neutral de los artefactos Codex instalados. Existe **un único** contrato de runtime (`runtime/AGENTS.md`, instalado como `AGENTS.md`); el desarrollo del arnés es externo a la plantilla de runtime, se describe como estructura de implementación futura en `runtime/agents/`, `adapters/codex/` y el paquete `se_agent`, y no es una elección que el orquestador deba hacer durante la operación.
 
 ```text
 fuente (harness-neutral, repo de producto)        runtime instalado (Codex, proyecto destino)
 ├── framework/marco/ (dominio)                  ├── marco/ (desde framework/marco/)
 ├── framework/guias/skill-architecture.md       │   (no se instala)
 │   (arquitectura de capacidades; diseño)       │
-├── runtime/catalogo/skill-registry.md          ├── catalogo/skill-registry.md (read-only, desde runtime/catalogo/)
+├── runtime/catalogo/skill-registry.md          ├── catalogo/skill-registry.md (copia exacta, propiedad del consumidor)
 ├── runtime/                                    ├── .agents/skills/<skill>/SKILL.md (desde runtime/skills/)
 │   ├── AGENTS.md (contrato instalable)         ├── .codex/agents/*.toml (desde adapters/codex/)
 │   ├── skills/ (contratos ejecutables)         ├── .codex/config.toml (desde adapters/codex/)
 │   └── agents/ (contratos harness-neutral)     └── AGENTS.md (instalado, desde runtime/AGENTS.md)
 ├── adapters/codex/ (plantillas)
-├── installer/windows/
+├── se_agent/ (paquete del scaffolder; implementación pendiente)
 └── tests/{unit,integration,fixtures}
 ```
 
@@ -122,22 +124,24 @@ fuente (harness-neutral, repo de producto)        runtime instalado (Codex, proy
 
 ## Hechos de Codex (a confirmar en cada versión)
 
-| Concepto                   | Ubicación / regla                                    |
+| Concepto                   | Ubicación / regla                                     |
 | -------------------------- | ----------------------------------------------------- |
-| Skills de repo             | `.agents/skills/<skill>/SKILL.md`                   |
-| Agentes de proyecto        | `.codex/agents/*.toml`                              |
-| Configuración de proyecto | `.codex/config.toml`                                |
-| Guía persistente          | `AGENTS.md`                                         |
+| Skills de repo             | `.agents/skills/<skill>/SKILL.md`                     |
+| Agentes de proyecto        | `.codex/agents/*.toml`                                |
+| Configuración de proyecto  | `.codex/config.toml`                                  |
+| Guía persistente           | `AGENTS.md`                                           |
 | Herencia                   | Los agentes heredan los settings omitidos             |
-| Agente custom mínimo      | `name`, `description`, `developer_instructions` |
+| Agente custom mínimo       | `name`, `description`, `developer_instructions`       |
 
 Restricciones de herramientas built-in: **no asumir** un allowlist genérico en el TOML salvo que la documentación oficial indique una clave específica. Para aislar herramientas, usar sandbox, settings MCP por agente y habilitar/deshabilitar tools MCP. Mantenerlo como una preocupación abierta del adaptador.
 
 ## Slice vertical mínimo
 
-1. Un contrato de fase canónico (ej. `F0`).
-2. Una skill de fase traducida a `.agents/skills/`.
-3. Un adaptador que genere `.codex/config.toml` + un agente.
+El slice vertical del MVP está definido en [PRD 1](../prd/prd-001-one-shot-codex-scaffolder.md) (§3, §10). En términos de este documento:
+
+1. Un contrato de fase canónico (ej. `F0`) y una skill F0 **funcional** en `runtime/skills/` (implementación pendiente).
+2. Los artefactos del adaptador en `adapters/codex/` (`.codex/config.toml` + agentes; por crear).
+3. `se-agent init --harness codex --target .` instala el payload one-shot (paquete `se_agent`; implementación pendiente).
 4. Un test de comportamiento: dado estado `preproyecto_presupuesto` y fase `F0`, el padre selecciona `f0_factibilidad`.
 
 ## Validación por comportamiento
