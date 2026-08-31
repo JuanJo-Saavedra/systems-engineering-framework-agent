@@ -7,3 +7,12 @@ tmp/
 # Local Pi runtime state
 .atl/
 .codegraph/
+
+# Python local-dev artifacts — LOCAL DEVELOPER ERGONOMICS ONLY.
+# CI never relies on these to forgive writes: its cleanliness assertion uses
+# `git status --porcelain=v1 --untracked-files=all --ignored=matching`, which
+# fails on any tracked, untracked, OR ignored in-tree delta (design D10).
+# The packaged mirror src/se_agent/_payload/ is intentionally NOT ignored.
+.pytest_cache/
+__pycache__/
+*.egg-info/
