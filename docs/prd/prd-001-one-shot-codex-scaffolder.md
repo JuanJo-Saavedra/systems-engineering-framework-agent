@@ -27,7 +27,7 @@ prd_id: PRD-1
 | Módulo Python | `se_agent` |
 | Lenguaje e implementación | Python, `>=3.12` |
 | Distribución | `pipx` instala el ZIP expuesto automáticamente por un tag SemVer inmutable de GitHub. **Sin PyPI, sin EXE portátil** en el MVP. |
-| URL de GitHub | Placeholder: `https://github.com/<organizacion>/<repo>` (se sustituye al definir la organización; ver §12) |
+| URL de GitHub | `https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent` |
 | Modelo de instalación | One-shot: `se-agent init --harness codex --target .` instala el payload y **termina**. Los archivos instalados pasan a ser 100 % propiedad del consumidor. |
 | Comandos en MVP | `init` y `--version` únicamente. |
 | Manifiesto / hashes / doctor / update / migración / detección de deriva / generador de registry | **Ninguno existe en el MVP.** |
@@ -85,7 +85,7 @@ Los equipos que adoptan el marco de ingeniería de sistemas necesitan arrancar u
 2. Desde la raíz de su repositorio de proyecto, ejecuta:
 
    ```bash
-   pipx install https://github.com/<organizacion>/<repo>/archive/refs/tags/vX.Y.Z.zip
+   pipx install https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip
    se-agent --version        # imprime X.Y.Z
    se-agent init --harness codex --target .
    ```
@@ -215,7 +215,7 @@ Con la aprobación de este PRD, la conciliación documental quedó definida. Las
 | 4 | `docs/decisions/skill-artifacts.md` | ✅ Conciliado: registry operativo reclasificado de "generado" a "mantenido manualmente con verificación CI". |
 | 5 | `runtime/catalogo/skill-registry.md` | ✅ Conciliado: cabecera actualizada a mantenimiento manual. El contenido se puebla al implementar la skill F0 (implementation pending). |
 | 6 | `runtime/agents/` | Decidir destino (instalado o no) de los contratos harness-neutrales; hoy sin resolución, excluido del payload §7. |
-| 7 | Publicación | Definir organización/URL GitHub real y sustituir el placeholder de §1. |
+| 7 | Publicación | ✅ URL GitHub real definida: `https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent`. Pendiente: crear el tag inmutable `v0.1.0` y ejecutar la verificación manual de AC-1/AC-2 (§10, checklist de release). |
 | 8 | Soporte de SO | Confirmar la matriz de sistemas operativos objetivo de la CLI (pipx es multiplataforma; los docs previos asumían Windows). |
 
 ## 13. Riesgos
@@ -224,7 +224,7 @@ Con la aprobación de este PRD, la conciliación documental quedó definida. Las
 | --- | --- |
 | Documentación activa que contradiga este PRD | La conciliación documental (§12, filas 1–5) se aplicó; cualquier contradicción residual es un defecto a corregir. Filas 6–8 quedan como seguimiento abierto explícito. |
 | Sin deriva ni manifiesto, un consumidor puede editar archivos instalados y desalinearse del marco | Aceptado por diseño (one-shot): el proyecto es del consumidor. La re-instalación con `init` + colisiones explícitas es el único mecanismo de refresco. |
-| URL de GitHub placeholder hasta definir la organización | Riesgo documental acotado; bloquea AC-1, no el resto. |
+| URL de GitHub sin definir (resuelto) | La URL real ya está definida (§1) y ya no es bloqueante. AC-1/AC-2 siguen pendientes únicamente hasta que exista el tag `v0.1.0` y se ejecute la verificación manual. |
 | `init` re-ejecutado sobre un proyecto ya scaffoldeado dispara colisiones masivas | Comportamiento definido en §9 (listado completo, `[y/N]`, `--force`); no se implementan diff ni migración en MVP. |
 | Versión mínima de Codex sin definir | Queda como prerrequisito documental ("preinstalado y autenticado"), igual que en los docs vigentes. |
 | Escapes de ruta vía symlink preexistente en el destino | RNF-3 + AC-8 con tests dedicados. |
