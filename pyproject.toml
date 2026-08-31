@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "se-agent"
+version = "0.1.0"
+description = "One-shot Codex scaffolder: installs the declared payload into a target project and exits."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+se-agent = "se_agent.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "build>=1.2"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/se_agent"]
+
+[tool.pyright]
+extraPaths = ["src"]
+venvPath = "."
+venv = ".venv"
