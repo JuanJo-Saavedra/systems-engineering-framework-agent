@@ -36,7 +36,7 @@ Publish a new `se-agent` release by walking the six steps below in order. Steps 
 
 On a clean machine:
 
-- [ ] `pipx install https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip` succeeds.
+- [ ] `pipx install 'se-agent @ https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip'` succeeds.
 - [ ] `se-agent --version` prints exactly `X.Y.Z` (no `v` prefix) and exits 0; tag `vX.Y.Z`, `pyproject.toml` version, and printed version are all equal.
 - [ ] `se-agent init --harness codex --target /tmp/scratch` into an empty scratch directory succeeds; the tree contains exactly the write-set expansion and nothing else (no `.framework-agent/`, no manifest, no caches).
 - [ ] Offline check: with no network connectivity, `init` completes without attempting or requiring any network I/O (the payload travels inside the installed package).

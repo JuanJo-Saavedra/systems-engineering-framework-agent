@@ -85,7 +85,7 @@ Los equipos que adoptan el marco de ingeniería de sistemas necesitan arrancar u
 2. Desde la raíz de su repositorio de proyecto, ejecuta:
 
    ```bash
-   pipx install https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip
+   pipx install 'se-agent @ https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip'
    se-agent --version        # imprime X.Y.Z
    se-agent init --harness codex --target .
    ```
