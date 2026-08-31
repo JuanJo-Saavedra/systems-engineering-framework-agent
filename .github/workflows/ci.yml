@@ -1,0 +1,135 @@
+# Provably read-only CI (spec REQ-CI1 / AC-11; design D9/D10).
+#
+# Read-only property is enforced in three layers:
+#   (1) every command is chosen so it has no reason to write into the checkout;
+#   (2) all mutable output (wheel, pip caches, pytest basetemp) is redirected
+#       outside the checkout into $RUNNER_TEMP;
+#   (3) the working tree is PROVEN unchanged with a full Git-status diff
+#       (tracked + untracked + ignored) before vs. after the run.
+#
+# .gitignore is NEVER relied upon to forgive CI writes: `--ignored=matching`
+# makes any ignored-but-created in-tree file (e.g. a stray dist/) fail the job.
+# The .gitignore entries exist only for local developer ergonomics.
+#
+# `tools/sync_payload.py` is NEVER invoked by CI (REQ-CI1): CI only verifies
+# the committed mirror via the pytest payload-coherence oracle.
+#
+# Bytecode note (empirically proven in the local scratch dry-run):
+# `python -Im pytest` runs in isolated mode (-I), which implies -E, so the
+# PYTHONDONTWRITEBYTECODE environment variable alone is IGNORED by CPython and
+# pytest assertion-rewrite caches (*.cpython-*-pytest-*.pyc) leak into the
+# checkout. The `-B` interpreter flag sets sys.dont_write_bytecode directly and
+# is therefore what actually suppresses bytecode; the env var is kept for any
+# child processes spawned without -I. The final status assertion proves it.
+
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Push (branch) + pull_request verification. Tag pushes skip this job.
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out (restoration of committed state is the definition of clean)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Baseline working-tree-clean snapshot (tracked + untracked + ignored)
+        run: |
+          CLEAN='git status --porcelain=v1 --untracked-files=all --ignored=matching'
+          eval "$CLEAN" > "$RUNNER_TEMP/status-before.txt"
+          if [ -s "$RUNNER_TEMP/status-before.txt" ]; then
+            echo "working-tree-clean before: FAIL (baseline snapshot not empty)"
+            cat "$RUNNER_TEMP/status-before.txt"
+            exit 1
+          fi
+          echo "working-tree-clean before: OK/empty"
+
+      - name: Install PEP 517 build frontend (dev extra build>=1.2)
+        run: python -Im pip install "build>=1.2"
+
+      - name: Build wheel into runner temp (never the checkout)
+        run: python -Im build --wheel --outdir "$RUNNER_TEMP/dist"
+
+      - name: Install wheel + pytest into site-packages (outside the checkout)
+        run: python -Im pip install $RUNNER_TEMP/dist/se_agent-*.whl pytest
+
+      - name: Run tests with all mutable output outside the checkout
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: >
+          PYTHONDONTWRITEBYTECODE=1 python -BIm pytest -p no:cacheprovider
+          --basetemp="$RUNNER_TEMP/pytest" tests
+
+      - name: Final working-tree-clean assertion (tracked + untracked + ignored)
+        run: |
+          CLEAN='git status --porcelain=v1 --untracked-files=all --ignored=matching'
+          eval "$CLEAN" > "$RUNNER_TEMP/status-after.txt"
+          echo "working-tree-clean after snapshot:"
+          cat "$RUNNER_TEMP/status-after.txt"
+          diff "$RUNNER_TEMP/status-before.txt" "$RUNNER_TEMP/status-after.txt"
+          if [ -s "$RUNNER_TEMP/status-after.txt" ]; then
+            echo "working-tree-clean after: FAIL (snapshot not empty)"
+            exit 1
+          fi
+          echo "working-tree-clean after: OK/empty"
+
+  version-tag:
+    # Tag-only job: pure read-only comparison, no build/install/pytest (D10).
+    # Automated half of AC-2: immutable tag vX.Y.Z == pyproject.toml X.Y.Z.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Baseline working-tree-clean snapshot (uniform evidence)
+        run: |
+          CLEAN='git status --porcelain=v1 --untracked-files=all --ignored=matching'
+          eval "$CLEAN" > "$RUNNER_TEMP/status-before.txt"
+          if [ -s "$RUNNER_TEMP/status-before.txt" ]; then
+            echo "working-tree-clean before: FAIL (baseline snapshot not empty)"
+            cat "$RUNNER_TEMP/status-before.txt"
+            exit 1
+          fi
+          echo "working-tree-clean before: OK/empty"
+
+      - name: Compare tag version against pyproject.toml
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PYPROJECT_VERSION="$(python -c 'import pathlib, tomllib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          echo "tag version: $TAG_VERSION"
+          echo "pyproject.toml version: $PYPROJECT_VERSION"
+          if [ "$TAG_VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "version-tag: FAIL (tag v$TAG_VERSION != pyproject.toml $PYPROJECT_VERSION)"
+            exit 1
+          fi
+          echo "version-tag: OK ($TAG_VERSION == $PYPROJECT_VERSION)"
+
+      - name: Final working-tree-clean assertion (uniform evidence)
+        run: |
+          CLEAN='git status --porcelain=v1 --untracked-files=all --ignored=matching'
+          eval "$CLEAN" > "$RUNNER_TEMP/status-after.txt"
+          diff "$RUNNER_TEMP/status-before.txt" "$RUNNER_TEMP/status-after.txt"
+          if [ -s "$RUNNER_TEMP/status-after.txt" ]; then
+            echo "working-tree-clean after: FAIL (snapshot not empty)"
+            exit 1
+          fi
+          echo "working-tree-clean after: OK/empty"
