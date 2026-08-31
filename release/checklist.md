@@ -1,6 +1,6 @@
 # Release checklist — `se-agent` v`X.Y.Z`
 
-Publish a new `se-agent` release by walking the six steps below in order. Steps 1–4 are automated-verifiable; step 5 is manual and currently **BLOCKED**; step 6 records the standing non-goals that must never be violated by this process. First release version is `0.1.0` (tag `v0.1.0`); renumbering before first publication is allowed.
+Publish a new `se-agent` release by walking the six steps below in order. Steps 1–4 are automated-verifiable; step 5 is manual and currently **PENDING** until the immutable release tag exists; step 6 records the standing non-goals that must never be violated by this process. First release version is `0.1.0` (tag `v0.1.0`); renumbering before first publication is allowed.
 
 ## Quick path
 
@@ -8,7 +8,7 @@ Publish a new `se-agent` release by walking the six steps below in order. Steps 
 2. Confirm `pyproject.toml` version == intended `X.Y.Z`.
 3. Create and push annotated tag `vX.Y.Z` (tag protection recommended).
 4. Verify the CI `version-tag` job passes.
-5. (MANUAL, BLOCKED) pipx install from the real tag ZIP and offline smoke test.
+5. (MANUAL, PENDING) pipx install from the real tag ZIP and offline smoke test.
 6. Confirm non-goals: no manifest, no hashes, no generated outputs committed.
 
 ## Step 1 — CI green on `main` with read-only evidence
@@ -30,13 +30,13 @@ Publish a new `se-agent` release by walking the six steps below in order. Steps 
 
 - [ ] On the tag push, the `version-tag` job (trigger: `refs/tags/v*`) passes: it compares `${GITHUB_REF_NAME#v}` against the `pyproject.toml` version and fails on any mismatch (automated half of AC-2). No build, install, or pytest in this job.
 
-## Step 5 — MANUAL AC-1/AC-2: pipx install from the real tag (BLOCKED)
+## Step 5 — MANUAL AC-1/AC-2: pipx install from the real tag (PENDING)
 
-> **BLOCKED by the open GitHub organization/URL placeholder follow-up** (`https://github.com/<organizacion>/<repo>`). Do not execute this step until the real URL exists; this placeholder blocks only this step.
+> **PENDING until the immutable release tag exists.** The real repository URL is defined (`https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent`) and no longer blocks this step; do not execute this step until tag `v0.1.0` is created, pushed, and verified via step 4.
 
 On a clean machine:
 
-- [ ] `pipx install https://github.com/<organizacion>/<repo>/archive/refs/tags/vX.Y.Z.zip` succeeds.
+- [ ] `pipx install https://github.com/JuanJo-Saavedra/systems-engineering-framework-agent/archive/refs/tags/vX.Y.Z.zip` succeeds.
 - [ ] `se-agent --version` prints exactly `X.Y.Z` (no `v` prefix) and exits 0; tag `vX.Y.Z`, `pyproject.toml` version, and printed version are all equal.
 - [ ] `se-agent init --harness codex --target /tmp/scratch` into an empty scratch directory succeeds; the tree contains exactly the write-set expansion and nothing else (no `.framework-agent/`, no manifest, no caches).
 - [ ] Offline check: with no network connectivity, `init` completes without attempting or requiring any network I/O (the payload travels inside the installed package).
