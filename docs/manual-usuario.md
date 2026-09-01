@@ -327,7 +327,7 @@ Verá algo como:
 
 ```text
 Installed 20 file(s):
-.agents/skills/f0_factibilidad/SKILL.md
+.agents/skills/f0-factibilidad/SKILL.md
 .codex/agents/orchestrator.toml
 .codex/config.toml
 AGENTS.md
@@ -369,7 +369,7 @@ se-agent init --harness codex --target C:\ruta\a\otro\proyecto
 | `AGENTS.md`                  | Contrato del agente, en la raíz del destino.                                             |
 | `marco/`                     | Marco de ingeniería de sistemas (15 archivos: fases 0–8, glosario, reglas, catálogos). |
 | `catalogo/skill-registry.md` | Registry de capacidades/skills.                                                           |
-| `.agents/skills/`            | Skills instalables (en v0.1.1:`f0_factibilidad/SKILL.md`).                              |
+| `.agents/skills/`            | Skills instalables (en v0.1.1:`f0-factibilidad/SKILL.md`).                              |
 | `.codex/`                    | Artefactos del adaptador Codex (`config.toml`, `agents/orchestrator.toml`).           |
 
 Ningún otro archivo del destino se crea, modifica ni elimina. En especial, una carpeta `proyecto/` que usted tenga queda **intocable siempre**, incluso con `--force`.

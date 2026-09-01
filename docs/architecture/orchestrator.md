@@ -142,7 +142,7 @@ El slice vertical del MVP está definido en [PRD 1](../prd/prd-001-one-shot-code
 1. Un contrato de fase canónico (ej. `F0`) y una skill F0 **funcional** en `runtime/skills/` (implementación pendiente).
 2. Los artefactos del adaptador en `adapters/codex/` (`.codex/config.toml` + agentes; por crear).
 3. `se-agent init --harness codex --target .` instala el payload one-shot (paquete `se_agent`; implementación pendiente).
-4. Un test de comportamiento: dado estado `preproyecto_presupuesto` y fase `F0`, el padre selecciona `f0_factibilidad`.
+4. Un test de comportamiento: dado estado `preproyecto_presupuesto` y fase `F0`, el padre selecciona `f0-factibilidad` (capacidad `f0_factibilidad` en la arquitectura de capacidades).
 
 ## Validación por comportamiento
 

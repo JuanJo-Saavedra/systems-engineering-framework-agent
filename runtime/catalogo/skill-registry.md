@@ -1,7 +1,7 @@
 ---
 document_type: registry_operativo
 language: es
-version: 1.2
+version: 1.3
 status: manual
 maintained_by: autores del producto
 skills_source: runtime/skills/*/SKILL.md
@@ -25,7 +25,7 @@ skills_available: 1
 
 | id | trigger | ruta |
 | -- | ------- | ---- |
-| `f0_factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; problema, CONOPS, ROM, riesgos, Go/No-Go | `.agents/skills/f0_factibilidad/SKILL.md` |
+| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; problema, CONOPS, ROM, riesgos, Go/No-Go | `.agents/skills/f0-factibilidad/SKILL.md` |
 
 ## Estado de la verificación
 

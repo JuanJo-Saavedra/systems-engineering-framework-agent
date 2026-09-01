@@ -5,10 +5,11 @@ proves bidirectional coherence with `runtime/skills/*/SKILL.md`:
 
 1. registry structure: rows parse under `## Skills disponibles`, no duplicates,
    no malformed rows, each `ruta` has the exact installed form
-   `.agents/skills/<id>/SKILL.md`, and the frontmatter `skills_available` count
+   `.agents/skills/<id>/SKILL.md`, every id is kebab-case (generic executable
+   skill naming convention), and the frontmatter `skills_available` count
    equals the number of rows;
 2. skills side: every skill directory's frontmatter `name` equals its
-   directory name (D6/D7);
+   directory name (D6/D7) and is kebab-case;
 3. bidirectional set equality: skill ids ≡ registry ids (missing → fail,
    stale → fail).
 
@@ -33,6 +34,12 @@ HEADER_CELLS = ("id", "trigger", "ruta")
 
 #: Exact installed ruta form for a skill id (D7).
 RUTA_TEMPLATE = ".agents/skills/{skill_id}/SKILL.md"
+
+#: Generic executable-skill naming convention: kebab-case (lowercase letters and
+#: digits, hyphen-separated). Conceptual capability ids (e.g. snake_case ids in
+#: `framework/guias/skill-architecture.md`) are out of scope: this rule applies
+#: only to executable skill ids in `runtime/skills/` and the registry.
+KEBAB_CASE_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n?---[ \t]*\n", re.DOTALL)
 _ROW_SPLIT_RE = re.compile(r"\s*\|\s*")
@@ -132,6 +139,10 @@ def check_registry_text(text: str) -> list[str]:
     for skill_id, count in sorted(counts.items()):
         if count > 1:
             problems.append(f"duplicate registry entry for skill {skill_id!r} ({count} rows)")
+        if not KEBAB_CASE_RE.fullmatch(skill_id):
+            problems.append(
+                f"non-kebab-case registry id for skill {skill_id!r}: executable skill ids must be kebab-case"
+            )
 
     for row in rows:
         expected = RUTA_TEMPLATE.format(skill_id=row.skill_id)
@@ -170,6 +181,10 @@ def check_coherence(skills_root: Path, registry_path: Path) -> list[str]:
 
     skill_ids = skill_directories(skills_root)
     for name in sorted(skill_ids):
+        if not KEBAB_CASE_RE.fullmatch(name):
+            problems.append(
+                f"non-kebab-case skill directory {name!r}: executable skill ids must be kebab-case"
+            )
         skill_text = (skills_root / name / "SKILL.md").read_text(encoding="utf-8")
         declared_name = extract_frontmatter(skill_text).get("name")
         if declared_name != name:
