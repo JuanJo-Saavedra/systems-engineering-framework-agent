@@ -1,7 +1,7 @@
 ---
 document_type: arquitectura_capacidades
 language: es
-version: 2.1
+version: 2.2
 status: canonico
 ---
 
@@ -21,6 +21,25 @@ Este archivo es el catálogo canónico, legible por humanos y versionado, de las
 | La base para **seleccionar** una capacidad según el estado del proyecto. | Un `SKILL.md` ejecutable ni instrucciones de procedimiento. |
 | Fuente de dominio, junto con `framework/marco/` (instalado como `marco/`). | Una lista de skills/subagentes instalados. |
 | Catálogo versionado y mantenido a mano. | Estado del proyecto — eso vive en `proyecto/`. |
+
+## Contrato de transformación (marco → skill operativa)
+
+Las skills operativas (`runtime/skills/**/SKILL.md`) son **proyecciones** de capacidades de este catálogo, no manuales ni checklists: conservan los conceptos relevantes de la capacidad del marco y los adaptan a comportamiento consciente del estado del proyecto — producir y actualizar artefactos, declarar preparación de review y explicitar cierre y handoff. La decisión de artefactos y capas de autoridad vive en [skill-artifacts.md](../../docs/decisions/skill-artifacts.md).
+
+Contrato de nombres:
+
+| Nivel | Convención | Ejemplo | Estabilidad |
+| --- | --- | --- | --- |
+| Identificador conceptual de capacidad (encabezado de ficha y `bindings` aquí) | `snake_case` | `f0_factibilidad` | Estable: no cambia al renombrar el ejecutable. |
+| Nombre ejecutable (directorio de la skill, frontmatter `name`, `id` en el registry operativo) | `kebab-case` | `f0-factibilidad` | Cambia solo con edición explícita del registry y del `bindings` de la ficha. |
+
+El **binding** entre ambos niveles se declara en el campo `bindings` de la ficha y en el registry operativo; ningún `SKILL.md` redefine el significado del dominio.
+
+Reglas de la transformación:
+
+- La estructura de `framework/marco/` se **preserva**: una skill de fase no reordena ni reescribe el contrato de su fase.
+- Una skill de fase puede adaptar las `Actividades guía` del marco como **`Capacidades operacionales`**: la misma cobertura conceptual, expresada como comportamiento operativo (cuándo producir, actualizar, revisar y cerrar), sin duplicar el contenido de dominio del marco.
+- Cobertura pendiente: `datos_y_documentacion` y `lecciones_aprendidas` **no** están cubiertas por este catálogo. Son decisiones de cobertura pendientes, no capacidades implícitas: no existen como fichas y ninguna skill puede asumirlas sin que este catálogo las defina antes.
 
 ## Selección vs ejecución
 
@@ -98,8 +117,8 @@ Las transiciones de fase, las reviews y las baselines permanecen fail-closed ant
 | `guardrails_cierre` | sí | Guardas y condiciones de salida específicas; si no difieren, se heredan las guardas comunes. |
 | `fase_objetivo` | condicional | Solo para capacidades de `fase` o `transición`. |
 | `madurez_esperada` | condicional | Solo cuando aplica (`preliminar` o `formal`). |
-| `estado_implementacion` | sí | Nivel de madurez del enlace ejecutable: `definida`, `mapeada` o `verificada`. En v2.0 puede declararse una vez de forma global cuando es uniforme; si difiere entre capacidades, se declara en cada ficha. |
-| `bindings` | sí | Mapeo a skill/subagente ejecutable cuando exista evidencia; hoy no se declara ninguno verificado. En v2.0 puede declararse una vez de forma global cuando es uniforme; si difiere, se declara en cada ficha. |
+| `estado_implementacion` | sí | Nivel de madurez del enlace ejecutable: `definida`, `mapeada` o `verificada`. Valor por defecto global (`definida`); una ficha lo anula declarando su propio valor (v2.2). |
+| `bindings` | sí | Mapeo a skill/subagente ejecutable cuando exista evidencia. Valor por defecto global (ninguno); una ficha lo anula declarando su propio binding (v2.2). Hoy ninguno está verificado. |
 
 ## Madurez de implementación
 
@@ -111,9 +130,9 @@ Las etiquetas describen hasta dónde llega el enlace ejecutable de una capacidad
 | `mapeada` | Existe un enlace declarado a una skill o subagente, sin verificación de comportamiento completa. |
 | `verificada` | El enlace pasó pruebas de comportamiento (selección, degradación, fronteras). |
 
-Estado actual: **todas las capacidades listadas están en `definida`**. Este catálogo no declara ningún enlace ejecutable verificado; las skills/subagentes instalados se descubren por separado vía la metadata del harness o el índice técnico generado.
+Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy solo `f0_factibilidad` declara un enlace (`mapeada`).
 
-En v2.0, `estado_implementacion` y `bindings` se declaran una sola vez de forma global cuando el valor es uniforme para todo el catálogo (como ocurre hoy, con todo en `definida`). Si algún valor difiere entre capacidades, esos campos dejan de ser globales y se declaran en cada ficha.
+En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de forma global cuando el valor era uniforme para todo el catálogo. Desde v2.2 la regla es **valor por defecto global + anulación por ficha**: una ficha que declara sus propios campos `estado_implementacion` y `bindings` anula el valor por defecto solo para esa capacidad; el resto del catálogo permanece bajo el valor global.
 
 ## Catálogo de capacidades
 
@@ -156,16 +175,27 @@ En v2.0, `estado_implementacion` y `bindings` se declaran una sola vez de forma 
 - **Tipo**: fase
 - **Fase objetivo**: `F0`
 - **Madurez esperada**: `preliminar`
-- **Cuándo usarla**: para transformar una necesidad en problema, contexto, ROM, riesgos y recomendación Go/No-Go.
+- **Cuándo usarla**: para transformar una necesidad en problema, contexto, ROM, riesgos y recomendación Go/No-Go, y para declarar la preparación del dossier frente a la MCR.
 - **Fuentes autoritativas**:
   - `marco/fases/fase_0_concepto_y_factibilidad.md`
   - `proyecto/registros/riesgos.md`
+  - `proyecto/registros/requisitos.md`
   - `proyecto/registros/decisiones_tecnicas.md`
 - **Salidas esperadas**:
   - problema formulado,
   - CONOPS preliminar,
-  - estimación ROM,
-  - recomendación de continuidad.
+  - estimación ROM con rango, base, supuestos, exclusiones y confianza,
+  - riesgos iniciales,
+  - recomendación de continuidad (`Go`, `No-Go` o `no concluyente`),
+  - declaración de readiness del dossier para la `MCR / Concept Review`.
+- **Guardrails de cierre**:
+  - permanece en madurez `preliminar`; sin requisitos de sistema (`F2`), arquitectura (`F3`) ni diseño detallado (`F4`);
+  - evalúa solo la readiness del dossier frente a la MCR: no la convoca, la conduce ni la aprueba; en `F0` no aplica baseline formal;
+  - separa recomendación técnica (`Go`/`No-Go`/`no concluyente`), readiness del dossier (`borrador`, `listo para revisión`, `no recomendable avanzar`) y decisión humana; nunca se autoaprueba la transición a `F1 preliminar`;
+  - un artefacto obligatorio de `F0` sin ruta autoritativa en `proyecto/` se entrega como borrador estructurado marcado `ubicación pendiente`: no se inventan rutas ni se fabrica o sobrescribe evidencia en silencio;
+  - transversales dentro de su alcance: `riesgos` siempre; `requisitos` solo a nivel de necesidad preliminar; `decisiones_tecnicas` solo si una decisión temprana afecta la factibilidad.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `f0_factibilidad` → skill `f0-factibilidad` (`runtime/skills/f0-factibilidad/SKILL.md`; instalada como `.agents/skills/f0-factibilidad/SKILL.md`).
 
 #### `f1_stakeholders_preliminar`
 
@@ -455,3 +485,4 @@ Reglas adicionales:
 - [quickstart.md](../../docs/guides/quickstart.md) — flujo mínimo.
 - [agents-contract.md](../../docs/decisions/agents-contract.md) — decisión canónica: contrato único de `AGENTS.md`.
 - [skill-registry-gentle-ai.md](../../docs/history/skill-registry-gentle-ai.md) — referencia histórica de la skill generadora del índice técnico (no canónica para el dominio).
+- [skill-artifacts.md](../../docs/decisions/skill-artifacts.md) — decisión canónica: capas de autoridad (marco, catálogo, skills operativas, espejo de empaquetado) y registry operativo.

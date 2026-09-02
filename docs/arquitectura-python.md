@@ -14,9 +14,9 @@ Este manual explica la arquitectura interna del paquete Python `se_agent` (CLI `
 
 ## Historial de cambios
 
-| Versión del documento | Fecha      | Cambios                                                                                                                                                                                              |
+| Versión del documento | Fecha | Cambios |
 | ---------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0.0                  | 2026-08-31 | Primera versión: layout de build, mapa de módulos, secuencias, decisiones de seguridad, referencia completa de la API, conceptos Python, racionalidad e invariantes. Compatible con paquete 0.1.1. |
+| 1.0.0 | 2026-08-31 | Primera versión: layout de build, mapa de módulos, secuencias, decisiones de seguridad, referencia completa de la API, conceptos Python, racionalidad e invariantes. Compatible con paquete 0.1.1. |
 
 ---
 
@@ -38,13 +38,13 @@ Consejo: las funciones con guion bajo inicial (`_walk`, `_default_prompt`, …) 
 
 Decisiones arquitectónicas que definen todo lo demás:
 
-| Decisión                                                      | Consecuencia                                                                                                                                                                                               |
+| Decisión | Consecuencia |
 | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Cero dependencias en runtime** (`dependencies = []`) | Todo se implementa con la**librería estándar** de Python 3.12+: `argparse`, `pathlib`, `importlib`, `shutil`, `dataclasses`, `enum`, `stat`, `os`. No hay supply chain en runtime. |
-| **Payload viaja dentro del paquete**                     | `init` es **offline** (RF-9): nada se descarga en runtime; los bytes son idénticos para un mismo tag (determinismo por tag).                                                                      |
-| **Plan completo validado antes de la primera escritura** | Cualquier validación fallida ⇒**cero escrituras**. Se opta deliberadamente por fallar temprano y sin efectos.                                                                                      |
-| **Sin rollback**                                         | Si una escritura falla a mitad de camino, lo ya escrito se conserva (es del consumidor) y se reporta`written:`/`pending:`. No se inventa una transacción que luego falla.                             |
-| **Inyección por callables** para efectos colaterales    | El flujo acepta funciones inyectables (`is_interactive`, `prompt_yes_no`, `copy_file`, `stdout`, `stderr`), lo que hace el sistema testeable sin mocks mágicos ni parcheo global.               |
+| **Payload viaja dentro del paquete** | `init` es **offline** (RF-9): nada se descarga en runtime; los bytes son idénticos para un mismo tag (determinismo por tag). |
+| **Plan completo validado antes de la primera escritura** | Cualquier validación fallida ⇒**cero escrituras**. Se opta deliberadamente por fallar temprano y sin efectos. |
+| **Sin rollback** | Si una escritura falla a mitad de camino, lo ya escrito se conserva (es del consumidor) y se reporta`written:`/`pending:`. No se inventa una transacción que luego falla. |
+| **Inyección por callables** para efectos colaterales | El flujo acepta funciones inyectables (`is_interactive`, `prompt_yes_no`, `copy_file`, `stdout`, `stderr`), lo que hace el sistema testeable sin mocks mágicos ni parcheo global. |
 
 ---
 
@@ -72,7 +72,7 @@ systems-engineering-framework-agent/
 │           ├── AGENTS.md
 │           ├── catalogo/skill-registry.md
 │           ├── marco/…           # 15 archivos del marco
-│           ├── .agents/skills/f0_factibilidad/SKILL.md
+│           ├── .agents/skills/f0-factibilidad/SKILL.md
 │           └── .codex/{config.toml, agents/orchestrator.toml}
 ├── framework/                    # Fuente canónica del marco → se instala como marco/
 ├── runtime/                      # AGENTS.md, catalogo/, skills/ → raíz, catalogo/, .agents/skills/
@@ -111,9 +111,9 @@ Puntos clave para un junior:
 
 ### Dos formas de instalar el paquete
 
-| Forma                             | Qué pasa                                                                                                                                             |
+| Forma | Qué pasa |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pipx install <zip-de-tag>`     | pipx instala el paquete en**su propio entorno virtual aislado** y expone solo el comando `se-agent` en el `PATH`. Es la vía de usuario.    |
+| `pipx install <zip-de-tag>` | pipx instala el paquete en**su propio entorno virtual aislado** y expone solo el comando `se-agent` en el `PATH`. Es la vía de usuario. |
 | `pip install -e .` (desarrollo) | Instalación*editable*: `site-packages` apunta a `src/` del repositorio. Útil para desarrollar; los cambios en `src/` se ven sin reinstalar. |
 
 ---
@@ -603,21 +603,21 @@ Referencia completa del código en `src/se_agent/*.py`. Para cada elemento: firm
 
 Recopilación de los conceptos que aparecen en el código, con dónde se usan:
 
-| Concepto                                            | Dónde aparece                                           | Explicación corta                                                                                                                                                                                                                                                         |
+| Concepto | Dónde aparece | Explicación corta |
 | --------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entry point**                               | `pyproject.toml` → `se-agent = "se_agent.cli:main"` | El instalador genera un comando ejecutable que llama a una función Python concreta. Es la conexión entre "comando en la terminal" y "función en el paquete".                                                                                                            |
-| **Módulo / paquete**                         | `src/se_agent/`                                        | Un módulo es un archivo`.py`; un paquete es una carpeta de módulos. El `_` inicial en `_payload`, `_walk`, etc. señala "interno, no parte de la API pública".                                                                                                  |
-| **`python -m`**                             | `__main__.py`                                          | Ejecutar un paquete como script: el intérprete busca`__main__.py` y lo corre con `__name__ == "__main__"`.                                                                                                                                                            |
-| **`@dataclass`**                            | `PlannedFile`, `Violation`, `WriteOutcome`         | Genera constructor/`__repr__`/`__eq__` para clases de datos. `frozen=True` = inmutables (los datos del plan nunca cambian bajo tus pies); `order=True` = comparables y ordenables.                                                                                 |
-| **`pathlib`**                               | `run_init`, `validate_plan`, `writer`              | API orientada a objetos de rutas:`Path` (ruta real del SO) vs `PurePosixPath` (ruta lógica sin tocar el disco). El write-set se define en **POSIX puro** (`PurePosixPath`), idéntico en Windows y Linux; la conversión a ruta real solo ocurre al escribir. |
-| **Inyección de callables**                   | `run_init`, `resolve_collisions`, `execute_writes` | Recibir funciones como parámetros en vez de hardcodearlas: producción usa los defaults (`sys.stdin`, `shutil`), tests inyectan dobles. Equivale funcionalmente a un `Protocol`/interfaz, pero con tipos `Callable` simples, sin clases ni dependencias.          |
-| **`importlib.resources` / `Traversable`** | `payload.py`                                           | Leer archivos empaquetados**dentro** del paquete instalado, sin asumir que son archivos reales en un directorio (podrían vivir dentro del wheel/ZIP). `Traversable` es la interfaz mínima que abstrae eso.                                                       |
-| **stdout vs stderr**                          | `cli`, `init_flow`, `collision`                    | `stdout` es el **resultado** contractual (versión, listado de archivos instalados); `stderr` es diagnóstico y errores. Separarlos permite pipear la salida útil sin contaminarla con avisos.                                                                  |
-| **Códigos de salida**                        | `ExitCode`, `main`                                   | Convención POSIX/Windows: 0 éxito, ≠0 fallo. Permite scripts/CI tomar decisiones sin parsear texto. Aquí: 0/1/2/130.                                                                                                                                                   |
-| **Wheel**                                     | build y distribución                                    | ZIP estándar del paquete + metadatos; pipx lo despliega en el entorno aislado. Contiene el código**y** el espejo `_payload/` (por eso `init` es offline).                                                                                                      |
-| **Cero dependencias runtime**                 | `dependencies = []`                                    | Todo con librería estándar: sin supply chain, sin resolución de versiones de terceros, instalación reproducible, superficie de ataque mínima.                                                                                                                         |
-| **PEP 562 (atributos perezosos)**             | `__init__.py`                                          | `__getattr__` a nivel de módulo: `__version__` se resuelve de los metadatos instalados al momento de acceder, garantizando que lo impreso == instalado == `pyproject.toml`.                                                                                         |
-| **`os.lstat` vs `stat`/`exists`**       | `safety`, `collision`                                | `lstat`/`lexists` **no siguen** el symlink final: permiten ver el enlace mismo (incluso roto) en lugar de su objetivo. Fundamental para no escribir a través de symlinks.                                                                                       |
+| **Entry point** | `pyproject.toml` → `se-agent = "se_agent.cli:main"` | El instalador genera un comando ejecutable que llama a una función Python concreta. Es la conexión entre "comando en la terminal" y "función en el paquete". |
+| **Módulo / paquete** | `src/se_agent/` | Un módulo es un archivo`.py`; un paquete es una carpeta de módulos. El `_` inicial en `_payload`, `_walk`, etc. señala "interno, no parte de la API pública". |
+| **`python -m`** | `__main__.py` | Ejecutar un paquete como script: el intérprete busca`__main__.py` y lo corre con `__name__ == "__main__"`. |
+| **`@dataclass`** | `PlannedFile`, `Violation`, `WriteOutcome` | Genera constructor/`__repr__`/`__eq__` para clases de datos. `frozen=True` = inmutables (los datos del plan nunca cambian bajo tus pies); `order=True` = comparables y ordenables. |
+| **`pathlib`** | `run_init`, `validate_plan`, `writer` | API orientada a objetos de rutas:`Path` (ruta real del SO) vs `PurePosixPath` (ruta lógica sin tocar el disco). El write-set se define en **POSIX puro** (`PurePosixPath`), idéntico en Windows y Linux; la conversión a ruta real solo ocurre al escribir. |
+| **Inyección de callables** | `run_init`, `resolve_collisions`, `execute_writes` | Recibir funciones como parámetros en vez de hardcodearlas: producción usa los defaults (`sys.stdin`, `shutil`), tests inyectan dobles. Equivale funcionalmente a un `Protocol`/interfaz, pero con tipos `Callable` simples, sin clases ni dependencias. |
+| **`importlib.resources` / `Traversable`** | `payload.py` | Leer archivos empaquetados**dentro** del paquete instalado, sin asumir que son archivos reales en un directorio (podrían vivir dentro del wheel/ZIP). `Traversable` es la interfaz mínima que abstrae eso. |
+| **stdout vs stderr** | `cli`, `init_flow`, `collision` | `stdout` es el **resultado** contractual (versión, listado de archivos instalados); `stderr` es diagnóstico y errores. Separarlos permite pipear la salida útil sin contaminarla con avisos. |
+| **Códigos de salida** | `ExitCode`, `main` | Convención POSIX/Windows: 0 éxito, ≠0 fallo. Permite scripts/CI tomar decisiones sin parsear texto. Aquí: 0/1/2/130. |
+| **Wheel** | build y distribución | ZIP estándar del paquete + metadatos; pipx lo despliega en el entorno aislado. Contiene el código**y** el espejo `_payload/` (por eso `init` es offline). |
+| **Cero dependencias runtime** | `dependencies = []` | Todo con librería estándar: sin supply chain, sin resolución de versiones de terceros, instalación reproducible, superficie de ataque mínima. |
+| **PEP 562 (atributos perezosos)** | `__init__.py` | `__getattr__` a nivel de módulo: `__version__` se resuelve de los metadatos instalados al momento de acceder, garantizando que lo impreso == instalado == `pyproject.toml`. |
+| **`os.lstat` vs `stat`/`exists`** | `safety`, `collision` | `lstat`/`lexists` **no siguen** el symlink final: permiten ver el enlace mismo (incluso roto) en lugar de su objetivo. Fundamental para no escribir a través de symlinks. |
 
 ---
 
@@ -645,12 +645,12 @@ Recopilación de los conceptos que aparecen en el código, con dónde se usan:
 
 ### Costuras de prueba (testing seams)
 
-| Seam             | Parámetro                        | Default de producción          | Uso en tests                                                                |
+| Seam | Parámetro | Default de producción | Uso en tests |
 | ---------------- | --------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| ¿Hay terminal?  | `is_interactive: IsInteractive` | `sys.stdin.isatty()`          | Forzar modo interactivo/no interactivo.                                     |
-| Prompt sí/no    | `prompt_yes_no: PromptYesNo`    | prompt en stderr + readline     | Responder`y`, `n`, EOF determinísticamente.                            |
-| Copia de archivo | `copy_file: CopyFile`           | copia byte a byte con`shutil` | Inyectar`OSError` en el archivo k para probar escritura parcial (REQ-M1). |
-| Streams          | `stdout`, `stderr: TextIO`    | `sys.stdout` / `sys.stderr` | Capturar reports sin redirigir el proceso.                                  |
+| ¿Hay terminal? | `is_interactive: IsInteractive` | `sys.stdin.isatty()` | Forzar modo interactivo/no interactivo. |
+| Prompt sí/no | `prompt_yes_no: PromptYesNo` | prompt en stderr + readline | Responder`y`, `n`, EOF determinísticamente. |
+| Copia de archivo | `copy_file: CopyFile` | copia byte a byte con`shutil` | Inyectar`OSError` en el archivo k para probar escritura parcial (REQ-M1). |
+| Streams | `stdout`, `stderr: TextIO` | `sys.stdout` / `sys.stderr` | Capturar reports sin redirigir el proceso. |
 
 Estructura de tests que explota estas costuras: `tests/unit/` (parseo, planificación, safety, coherencia payload/registry, versión) + `tests/integration/` (árbol exacto post-init, colisiones, force, escritura parcial, plan inválido). Total: 106 tests; cubren los 12 criterios de aceptación del PRD 1. CI corre la suite de forma **probadamente read-only** (snapshot `git status --porcelain=v1 --untracked-files=all --ignored=matching` vacío antes y después del run, con todo output mutable en `$RUNNER_TEMP`), y en el job de tags compara `vX.Y.Z` contra `pyproject.toml` sin construir nada. Los usuarios finales no ejecutan tests: son parte del desarrollo y del CI.
 
@@ -660,14 +660,14 @@ Estructura de tests que explota estas costuras: `tests/unit/` (parseo, planifica
 
 Lo que este paquete **deliberadamente no hace** (ver PRD 1 §3):
 
-| No-objetivo                                                           | Razón                                                                                                                                                                                                |
+| No-objetivo | Razón |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rollback / transaccionalidad**                                | Lo escrito ya es del consumidor; revertirlo sería destruir su propiedad. En su lugar: fallar temprano (cero escrituras) o parar limpio con reporte`written:`/`pending:`.                         |
-| **Actualizador / manifiesto / hashes**                          | One-shot: tras`init` no hay estado gestionado, no hay `.framework-agent/`, no hay detección de deriva. Refrescar = re-ejecutar `init` (colisiones explícitas) o reinstalar otro tag con pipx. |
-| **Comandos `update` / `doctor` / `uninstall`**            | No existen; el desinstalado es de pipx, la actualización es desinstalar + instalar el tag nuevo.                                                                                                     |
-| **PyPI**                                                        | Distribución exclusivamente el ZIP del tag inmutable de GitHub (público) o el clon`git+ssh` del tag (privado).                                                                                    |
-| **Múltiples harnesses**                                        | Solo`codex` en el MVP; los contratos de dominio permanecen harness-neutrales para el futuro.                                                                                                        |
-| **Tocar `proyecto/` o cualquier archivo fuera del write-set** | Prohibición absoluta, incluso con`--force`.                                                                                                                                                        |
+| **Rollback / transaccionalidad** | Lo escrito ya es del consumidor; revertirlo sería destruir su propiedad. En su lugar: fallar temprano (cero escrituras) o parar limpio con reporte`written:`/`pending:`. |
+| **Actualizador / manifiesto / hashes** | One-shot: tras`init` no hay estado gestionado, no hay `.framework-agent/`, no hay detección de deriva. Refrescar = re-ejecutar `init` (colisiones explícitas) o reinstalar otro tag con pipx. |
+| **Comandos `update` / `doctor` / `uninstall`** | No existen; el desinstalado es de pipx, la actualización es desinstalar + instalar el tag nuevo. |
+| **PyPI** | Distribución exclusivamente el ZIP del tag inmutable de GitHub (público) o el clon`git+ssh` del tag (privado). |
+| **Múltiples harnesses** | Solo`codex` en el MVP; los contratos de dominio permanecen harness-neutrales para el futuro. |
+| **Tocar `proyecto/` o cualquier archivo fuera del write-set** | Prohibición absoluta, incluso con`--force`. |
 
 ---
 

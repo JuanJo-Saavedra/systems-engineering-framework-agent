@@ -91,6 +91,6 @@ def _default_prompt(prompt: str) -> str | None:
 
     Returns None on EOF (an empty readline), which aborts (REQ-C3).
     """
-    print(prompt, file=sys.stderr, end="")
+    print(prompt, file=sys.stderr, end="", flush=True)
     line = sys.stdin.readline()
     return None if line == "" else line

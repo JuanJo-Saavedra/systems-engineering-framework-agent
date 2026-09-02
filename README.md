@@ -10,15 +10,15 @@ Producto que empaqueta en un único repositorio **el marco de ingeniería de sis
 - **Comandos en MVP:** `se-agent init --harness codex --target .` y `se-agent --version` únicamente.
 - **Frontera de escritura estricta.** Solo los archivos del payload (PRD 1, §7) se crean o sobrescriben; preflight calcula destinos y colisiones antes de la primera escritura; `proyecto/` es intocable, incluso con `--force`. Interactivo: `[y/N]` ante colisiones; no interactivo: requiere `--force`. Se rechazan escapes por `..` y symlinks fuera del destino.
 - **Registry manual.** `runtime/catalogo/skill-registry.md` se mantiene **a mano**; CI/tests verifican coherencia bidireccional (nombres, rutas, duplicados, faltantes, obsoletos) y nunca generan ni modifican el registry.
-- **Slice vertical de Codex.** Solo Codex en el MVP; el dominio y los contratos runtime permanecen harness-neutral. Una skill F0 funcional (implementación pendiente).
+- **Slice vertical de Codex.** Solo Codex en el MVP; el dominio y los contratos runtime permanecen harness-neutral. Una skill F0 funcional (`f0-factibilidad`) disponible en runtime y registrada.
 
 ## Qué integra
 
 - el marco de ingeniería de sistemas (`framework/marco/`, instalado como `marco/`);
 - el contrato runtime del agente (`runtime/AGENTS.md`, instalado como `AGENTS.md` de raíz);
 - la **arquitectura de capacidades** (`framework/guias/skill-architecture.md`): qué asistencia existe, cuándo aplica y qué guardas la limitan; base de diseño, **no** se instala;
-- el **registry operativo** (`runtime/catalogo/skill-registry.md`, bootstrap con 0 skills): inventario **mantenido a mano**, instalado como copia exacta en `catalogo/skill-registry.md`;
-- las skills ejecutables (`runtime/skills/` → `.agents/skills/`; poblado de la skill F0 **pendiente**);
+- el **registry operativo** (`runtime/catalogo/skill-registry.md`, declara la skill `f0-factibilidad`): inventario **mantenido a mano**, instalado como copia exacta en `catalogo/skill-registry.md`;
+- las skills ejecutables (`runtime/skills/` → `.agents/skills/`; contiene la skill F0 `f0-factibilidad`, reflejada en el payload);
 - los contratos runtime harness-neutral (`runtime/agents/`, sin destino de instalación definido en el MVP) y el adaptador Codex (`adapters/codex/`, artefactos **pendientes** de crear).
 
 ## Árbol
@@ -31,10 +31,10 @@ framework/
     └── project-init.md        # guía de arranque (curada desde el histórico)
 runtime/
 ├── AGENTS.md                  # única fuente del contrato instalable (no hay AGENTS.md en raíz)
-├── skills/                    # → .agents/skills/ (skill F0 funcional pendiente)
+├── skills/                    # → .agents/skills/ (skill F0: f0-factibilidad)
 ├── agents/                    # contratos runtime harness-neutral
 └── catalogo/
-    └── skill-registry.md      # registry operativo (bootstrap 0 skills, manual) → catalogo/skill-registry.md
+    └── skill-registry.md      # registry operativo (1 skill: f0-factibilidad, manual) → catalogo/skill-registry.md
 adapters/
 └── codex/                     # lo específico de Codex (artefactos pendientes de crear)
 installer/
@@ -59,13 +59,13 @@ dist/                          # outputs generados, no versionados
 - **Arquitectura y topología**: `docs/architecture/product.md` (v3.0 adoptada, conciliada con PRD 1).
 - **Contrato de runtime**: `runtime/AGENTS.md` — no existe `AGENTS.md` en la raíz del producto.
 - **Arquitectura de capacidades**: `framework/guias/skill-architecture.md`.
-- **Registry operativo**: `runtime/catalogo/skill-registry.md` (bootstrap con 0 skills; mantenido a mano, verificación de coherencia en CI).
+- **Registry operativo**: `runtime/catalogo/skill-registry.md` (declara 1 skill: `f0-factibilidad`; mantenido a mano, verificación de coherencia en CI).
 - **Índice técnico del harness**: `.atl/skill-registry.md` (solo desarrollo; no se empaqueta ni instala).
 - **Histórico**: `docs/history/` es deprecated y no autoritativo.
 
 ## Estado
 
-La reestructuración física al árbol por capas **está ejecutada**. PRD 1 está **aprobado** y la documentación activa fue conciliada con él. Pendiente de implementación: el paquete/CLI `se_agent`, el payload de publicación (tag SemVer → ZIP pipx), la skill F0 funcional (`runtime/skills/` y entradas del registry), los artefactos del adaptador Codex (`adapters/codex/`) y las verificaciones de CI (registry ↔ skills, frontera de escritura). Ver [PRD 1, §12](docs/prd/prd-001-one-shot-codex-scaffolder.md) y [docs/architecture/product.md](docs/architecture/product.md).
+La reestructuración física al árbol por capas **está ejecutada**. PRD 1 está **aprobado** y la documentación activa fue conciliada con él. Implementada: la primera skill operativa (`f0-factibilidad` en `runtime/skills/`, con su entrada en el registry y su espejo en el payload). Pendiente de implementación: el paquete/CLI `se_agent`, el payload de publicación (tag SemVer → ZIP pipx), los artefactos del adaptador Codex (`adapters/codex/`) y las verificaciones de CI (frontera de escritura). Ver [PRD 1, §12](docs/prd/prd-001-one-shot-codex-scaffolder.md) y [docs/architecture/product.md](docs/architecture/product.md).
 
 ## Alcance del MVP
 

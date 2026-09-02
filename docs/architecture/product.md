@@ -30,7 +30,7 @@ El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entr
 | Guías canónicas del framework | `framework/guias/`; **no** se instalan en consumidores. |
 | Arquitectura de capacidades | `framework/guias/skill-architecture.md` (autoridad de significado conceptual; separada del registry operativo). |
 | Contrato instalable | `runtime/AGENTS.md` es la **única** fuente; no hay `AGENTS.md` en raíz del repo de producto; en el consumidor se instala como `AGENTS.md` de raíz. |
-| Skills | `runtime/skills/` → `.agents/skills/`. **Implementación pendiente**: exactamente una skill F0 funcional en el MVP. |
+| Skills | `runtime/skills/` → `.agents/skills/`. Contiene la skill F0 funcional (`f0-factibilidad`), registrada en el registry operativo y reflejada en el payload; capacidades adicionales pendientes de mapear. |
 | Contratos runtime harness-neutral | `runtime/agents/`. Sin destino de instalación definido en el MVP (seguimiento abierto, PRD 1 §12); no se instala. |
 | Específico de Codex | `adapters/codex/` (`.codex/config.toml`, `.codex/agents/*.toml`). Artefactos **por crear**; exponen mecanismos, nunca reglas de dominio. |
 | Instalador | El enfoque `installer/windows/` (comandos y empaquetado portable EXE) quedó **obsoleto** con PRD 1; lo sustituye el paquete Python `se_agent`. |
@@ -151,10 +151,10 @@ systems-engineering-framework-agent/
 │       └── project-init.md             # guía de arranque (curada desde el histórico)
 ├── runtime/
 │   ├── AGENTS.md                       # única fuente del contrato instalable (no hay AGENTS.md en raíz)
-│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (skill F0 pendiente)
+│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (skill F0: f0-factibilidad)
 │   ├── agents/                         # contratos runtime harness-neutral (sin destino de instalación definido)
 │   └── catalogo/
-│       └── skill-registry.md           # registry operativo (bootstrap 0 skills, manual) → catalogo/skill-registry.md
+│       └── skill-registry.md           # registry operativo (1 skill: f0-factibilidad, manual) → catalogo/skill-registry.md
 ├── adapters/
 │   └── codex/                          # artefactos Codex (por crear): config.toml + agents/*.toml
 ├── installer/
@@ -382,9 +382,9 @@ Los IDs son ayudas de bootstrap de la instancia Engram actual, no claves de domi
 
 - [ ] Implementar el paquete `se_agent` con CLI `se-agent` (`init` y `--version`), preflight, protocolo de colisiones y frontera de escritura estricta (PRD 1, §5, §8–9).
 - [ ] Configurar el pipeline de publicación: tag SemVer inmutable → ZIP → `pipx`; coherencia de versión (PRD 1, AC-1/AC-2).
-- [ ] Poblar `runtime/skills/` con la skill F0 funcional y su entrada en el registry (PRD 1, AC-12).
+- [x] Poblar `runtime/skills/` con la skill F0 funcional (`f0-factibilidad`) y su entrada en el registry (PRD 1, AC-12).
 - [ ] Crear los artefactos del adaptador Codex en `adapters/codex/` (`.codex/config.toml` + agentes).
-- [ ] Implementar la verificación de coherencia bidireccional registry ↔ `runtime/skills/` en tests/CI (PRD 1, AC-10), sin generación del registry.
+- [x] Implementar la verificación de coherencia bidireccional registry ↔ `runtime/skills/` en tests/CI (PRD 1, AC-10), sin generación del registry.
 - [ ] Añadir las pruebas de comportamiento (payload exacto, `proyecto/` byte a byte, write-set, escapes de ruta, colisiones) según PRD 1, §10.
 - [ ] Definir la organización/URL de GitHub y sustituir el placeholder de PRD 1.
 - [ ] Confirmar la matriz de sistemas operativos objetivo.
@@ -407,9 +407,9 @@ Rutas presentes en el árbol vigente:
 - `../../framework/guias/project-init.md` — guía de arranque (curada desde el histórico).
 - `../../framework/marco/README.md` — contenido del dominio.
 - `../../runtime/AGENTS.md` — contrato de runtime canónico.
-- `../../runtime/catalogo/skill-registry.md` — registry operativo (bootstrap 0 skills; mantenido a mano).
+- `../../runtime/catalogo/skill-registry.md` — registry operativo (declara la skill `f0-factibilidad`; mantenido a mano).
 - `../../README.md` — resumen del producto.
 
-`runtime/skills/` es la ubicación vigente de las skills ejecutables (poblado pendiente) y no se lista como referencia individual.
+`runtime/skills/` es la ubicación vigente de las skills ejecutables (contiene la skill F0 `f0-factibilidad`) y no se lista como referencia individual.
 
 El estado autoritativo del proyecto vivo no vive en este repositorio: reside en el fixture `proyecto-base` (por ejemplo `proyecto/estado/proyecto_actual.md`, `proyecto/estado/estado_fases.md`, `proyecto/hitos/hito_aprobacion_trabajo.md`), y el producto lo respeta como intocable.
