@@ -1,32 +1,27 @@
 ---
-document_type: registry_operativo
-language: es
-version: 1.3
-status: manual
-maintained_by: autores del producto
-skills_source: runtime/skills/*/SKILL.md
-installed_as: catalogo/skill-registry.md
-skills_available: 1
+version: 2.0
+description: "Registry de skills instaladas: localiza la skill aplicable al contexto y la tarea, y expone la ruta exacta de cada SKILL.md a cargar antes de actuar."
 ---
 
-# Registry operativo de skills
+# Registry de skills instaladas
 
-> **Mantenido a mano — no se genera.** Este archivo es el inventario operativo de skills disponibles. Lo editan manualmente los autores del producto al añadir, renombrar o retirar skills en `runtime/skills/`; CI/tests verifican su coherencia bidireccional con ese directorio y **nunca lo generan ni lo modifican** (PRD 1, §11).
+## Contrato
 
-## Fuente y destino
+Este registry es el índice de disponibilidad de skills instaladas. Su función es localizar la skill aplicable para el contexto y la tarea del orquestador.
 
-| Dato | Valor |
-| --- | --- |
-| Skills fuente | `runtime/skills/*/SKILL.md` |
-| Destino instalado | `catalogo/skill-registry.md` (copia exacta; propiedad del consumidor tras `se-agent init`) |
-| Mantenimiento | Manual y versionado; sin comando de build ni generación |
+- No redefine el dominio ni el procedimiento de ninguna fase ni capacidad.
+- Cada `SKILL.md` referenciado es la única fuente de instrucciones operativas de su skill; este registry no las sustituye ni las resume.
 
 ## Skills disponibles
 
-| id | trigger | ruta |
-| -- | ------- | ---- |
-| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; necesidad, problema, stakeholders, CONOPS, ROM, riesgos, factibilidad, Go/No-Go y readiness de MCR | `.agents/skills/f0-factibilidad/SKILL.md` |
+| Skill / id | Contexto o trigger | Tipo / alcance | Ruta instalada |
+| ---------- | ------------------ | -------------- | -------------- |
+| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; necesidad, problema, stakeholders, CONOPS, ROM, riesgos, factibilidad, Go/No-Go y readiness de MCR | Skill de fase (F0) | `.agents/skills/f0-factibilidad/SKILL.md` |
 
-## Estado de la verificación
+## Protocolo de carga
 
-La verificación de coherencia bidireccional (registry ↔ `runtime/skills/`: entradas exactas, sin duplicados, faltantes ni obsoletos) está implementada en `tests/unit/test_registry_coherence.py` con el verificador de solo lectura `tests/helpers/registry_check.py`, y corre en tests/CI (PRD 1, AC-10). Esta verificación **nunca genera ni modifica** este archivo (PRD 1, §11); la edición manual sigue siendo la única forma de cambiarlo.
+1. Leer el estado del proyecto y clasificar la tarea.
+2. Seleccionar la skill de fase y madurez correspondiente como contexto primario.
+3. Añadir únicamente las skills transversales o de tarea puntual afectadas por la salida; no cargar todas por defecto.
+4. Cargar el `SKILL.md` exacto de cada skill seleccionada, leyendo la ruta instalada indicada en este registry, antes de actuar.
+5. Si la skill que la tarea requiere no figura aquí, declarar la ausencia de forma explícita: no inventar estado, evidencia ni instrucciones.

@@ -1,204 +1,93 @@
-"""D7 / REQ-R1..R3 — registry↔skills coherence verifier (pure, read-only).
+"""Registry↔skills coherence verifier (pure, read-only, schema-agnostic).
 
-Parses the hand-maintained registry (`runtime/catalogo/skill-registry.md`) and
-proves bidirectional coherence with `runtime/skills/*/SKILL.md`:
+The registry (`runtime/catalogo/skill-registry.md`) is HAND-MAINTAINED free-form
+documentation: this module asserts NO internal contract for it — no table
+shape, column count or order, section names, frontmatter keys, backticks, or
+installed ruta forms. The single coherence invariant is distribution-level:
 
-1. registry structure: rows parse under `## Skills disponibles`, no duplicates,
-   no malformed rows, each `ruta` has the exact installed form
-   `.agents/skills/<id>/SKILL.md`, every id is kebab-case (generic executable
-   skill naming convention), and the frontmatter `skills_available` count
-   equals the number of rows;
-2. skills side: every skill directory's frontmatter `name` equals its
-   directory name (D6/D7) and is kebab-case;
-3. bidirectional set equality: skill ids ≡ registry ids (missing → fail,
-   stale → fail).
+1. every real skill directory under `runtime/skills/` that contains a
+   `SKILL.md` (its directory name = its full id) must appear somewhere in the
+   registry body as that complete id, matched with safe boundaries so an
+   accidental longer identifier (e.g. `<id>-v2`) or a substring of another
+   token is not accepted;
+2. skill directory names follow the generic kebab-case executable-skill
+   naming convention (conceptual capability ids elsewhere are out of scope);
+3. the registry exists and is non-empty;
+4. verification is strictly read-only: it never writes, generates, or modifies
+   anything.
 
-The registry is HAND-MAINTAINED (REQ-R3): this module never writes, never
-generates, and never modifies anything. It is pure stdlib (`re`, `pathlib`,
-`hashlib`, `dataclasses`) and works on the canonical repo paths or on temp
-fixture copies; tests assert byte-invariance around every run.
+The check adapts dynamically to skills added or removed under
+`runtime/skills/`: no id, inventory, count, section, or table structure is
+encoded here. Pure stdlib (`re`, `pathlib`); works on the canonical repo paths
+or on temp fixture copies; tests assert byte-invariance around every run.
 """
 
 from __future__ import annotations
 
-import hashlib
 import re
-from dataclasses import dataclass
 from pathlib import Path
-
-#: Registry section where skill rows live (design D7).
-SECTION_HEADER = "## Skills disponibles"
-
-#: Fixed table header cells per design D7.
-HEADER_CELLS = ("id", "trigger", "ruta")
-
-#: Exact installed ruta form for a skill id (D7).
-RUTA_TEMPLATE = ".agents/skills/{skill_id}/SKILL.md"
 
 #: Generic executable-skill naming convention: kebab-case (lowercase letters and
 #: digits, hyphen-separated). Conceptual capability ids (e.g. snake_case ids in
 #: `framework/guias/skill-architecture.md`) are out of scope: this rule applies
-#: only to executable skill ids in `runtime/skills/` and the registry.
+#: only to executable skill directory names under `runtime/skills/`.
 KEBAB_CASE_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 
-_FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n?---[ \t]*\n", re.DOTALL)
-_ROW_SPLIT_RE = re.compile(r"\s*\|\s*")
-_SEPARATOR_CELL_RE = re.compile(r"-+")
-
-
-@dataclass(frozen=True)
-class RegistryRow:
-    """One parsed registry table row: `| id | trigger | ruta |`."""
-
-    skill_id: str
-    trigger: str
-    ruta: str
-
-
-def extract_frontmatter(text: str) -> dict[str, str]:
-    """Shared simple frontmatter extractor: `key: value` lines between leading `---` fences.
-
-    Used by both the registry parser (`skills_available`) and the AC-12 test
-    (skill `name`) — one extraction rule, no duplication.
-    """
-    match = _FRONTMATTER_RE.match(text)
-    if match is None:
-        return {}
-    fields: dict[str, str] = {}
-    for line in match.group(1).splitlines():
-        key, sep, value = line.partition(":")
-        if sep:
-            fields[key.strip()] = value.strip()
-    return fields
-
-
-def parse_registry(text: str) -> tuple[list[str], list[RegistryRow], int | None]:
-    """Parse registry text → (problems, rows, declared `skills_available`).
-
-    Pure text parsing: malformed rows are reported, never raised, so one bad
-    row cannot hide the others.
-    """
-    problems: list[str] = []
-    rows: list[RegistryRow] = []
-
-    fields = extract_frontmatter(text)
-    raw_count = fields.get("skills_available")
-    declared: int | None = None
-    if raw_count is None or not raw_count.isdigit():
-        problems.append(f"frontmatter skills_available missing or not an integer: {raw_count!r}")
-    else:
-        declared = int(raw_count)
-
-    lines = text.splitlines()
-    try:
-        section_start = lines.index(SECTION_HEADER)
-    except ValueError:
-        problems.append(f"registry section not found: {SECTION_HEADER!r}")
-        return problems, rows, declared
-
-    seen_table = False
-    for line in lines[section_start + 1 :]:
-        stripped = line.strip()
-        if stripped.startswith("## "):
-            break  # next section header: table ended
-        if not stripped.startswith("|"):
-            if seen_table and stripped:
-                break  # prose after the table: table ended
-            continue  # blank lines / prose before the table
-        cells = [cell.strip() for cell in _ROW_SPLIT_RE.split(stripped.strip("|"))]
-        if tuple(cells) == HEADER_CELLS:
-            continue  # fixed D7 table header row
-        if cells and all(_SEPARATOR_CELL_RE.fullmatch(cell) for cell in cells):
-            continue  # markdown table separator row
-        if len(cells) != 3 or not all(cells):
-            problems.append(f"malformed registry row (expected 3 cells: id, trigger, ruta): {stripped!r}")
-            seen_table = True
-            continue
-        rows.append(
-            RegistryRow(
-                skill_id=cells[0].strip().strip("`"),
-                trigger=cells[1].strip(),
-                ruta=cells[2].strip().strip("`"),
-            )
-        )
-        seen_table = True
-    return problems, rows, declared
-
-
-def check_registry_text(text: str) -> list[str]:
-    """Row-level structural checks on registry text (no filesystem access).
-
-    Fails on: malformed rows, duplicate ids, wrong `ruta` form, and a
-    `skills_available` count that does not equal the number of rows (REQ-R2).
-    """
-    problems, rows, declared = parse_registry(text)
-
-    counts: dict[str, int] = {}
-    for row in rows:
-        counts[row.skill_id] = counts.get(row.skill_id, 0) + 1
-    for skill_id, count in sorted(counts.items()):
-        if count > 1:
-            problems.append(f"duplicate registry entry for skill {skill_id!r} ({count} rows)")
-        if not KEBAB_CASE_RE.fullmatch(skill_id):
-            problems.append(
-                f"non-kebab-case registry id for skill {skill_id!r}: executable skill ids must be kebab-case"
-            )
-
-    for row in rows:
-        expected = RUTA_TEMPLATE.format(skill_id=row.skill_id)
-        if row.ruta != expected:
-            problems.append(f"wrong ruta for skill {row.skill_id!r}: {row.ruta!r} (expected {expected!r})")
-
-    if declared is not None and declared != len(rows):
-        problems.append(
-            f"skills_available count mismatch: frontmatter declares {declared}, registry has {len(rows)} row(s)"
-        )
-    return problems
+#: Characters that may extend a kebab-case identifier left or right. A full-id
+#: match must not be adjacent to any of these, so `<id>-v2`, `x<id>`, or
+#: `<id>_suffix` never count as a mention of `<id>`.
+_ID_EDGE_CHARS = "0-9A-Za-z-"
 
 
 def skill_directories(skills_root: Path) -> set[str]:
-    """Skill ids: directories under `skills_root` containing a `SKILL.md` (D7)."""
+    """Skill ids: directories under `skills_root` containing a `SKILL.md`."""
     if not skills_root.is_dir():
         return set()
     return {p.name for p in skills_root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()}
 
 
-def check_coherence(skills_root: Path, registry_path: Path) -> list[str]:
-    """REQ-R1/R2 bidirectional check on arbitrary paths (canonical or temp fixtures).
+def id_boundary_pattern(skill_id: str) -> re.Pattern[str]:
+    """Regex matching `skill_id` as a complete identifier with safe boundaries.
 
-    Pure read-only: reads the registry text and each skill's frontmatter, never
+    Pure text matching: the identifier may appear anywhere in the registry body
+    (table cell, list item, prose — any format), but a longer kebab-style token
+    that merely contains it as a substring is rejected.
+    """
+    return re.compile(rf"(?<![{_ID_EDGE_CHARS}]){re.escape(skill_id)}(?![{_ID_EDGE_CHARS}])")
+
+
+def registry_mentions_skill(text: str, skill_id: str) -> bool:
+    """True if the registry body mentions `skill_id` as a complete identifier."""
+    return id_boundary_pattern(skill_id).search(text) is not None
+
+
+def check_coherence(skills_root: Path, registry_path: Path) -> list[str]:
+    """Distribution-level registry↔skills check on arbitrary paths (canonical or temp fixtures).
+
+    Pure read-only: reads the registry text and skill directory names, never
     writes. Returns human-readable problems; empty list = coherent.
     """
     problems: list[str] = []
     if not registry_path.is_file():
         return [f"registry file does not exist: {registry_path}"]
     text = registry_path.read_text(encoding="utf-8")
-    problems.extend(check_registry_text(text))
+    if not text.strip():
+        return [f"registry file is empty: {registry_path}"]
 
     if not skills_root.is_dir():
-        problems.append(f"skills source directory does not exist: {skills_root}")
-        return problems
+        return [*problems, f"skills source directory does not exist: {skills_root}"]
 
     skill_ids = skill_directories(skills_root)
+    if not skill_ids:
+        problems.append(f"no skill directories containing a SKILL.md found under: {skills_root}")
+
     for name in sorted(skill_ids):
         if not KEBAB_CASE_RE.fullmatch(name):
             problems.append(
                 f"non-kebab-case skill directory {name!r}: executable skill ids must be kebab-case"
             )
-        skill_text = (skills_root / name / "SKILL.md").read_text(encoding="utf-8")
-        declared_name = extract_frontmatter(skill_text).get("name")
-        if declared_name != name:
-            problems.append(f"frontmatter name mismatch for skill {name!r}: name={declared_name!r}")
-
-    _, rows, _ = parse_registry(text)
-    registry_ids = {row.skill_id for row in rows}
-    for missing in sorted(skill_ids - registry_ids):
-        problems.append(f"missing registry entry for skill {missing!r}")
-    for stale in sorted(registry_ids - skill_ids):
-        problems.append(f"stale registry entry (no matching skill directory): {stale!r}")
+        if not registry_mentions_skill(text, name):
+            problems.append(
+                f"registry does not mention skill {name!r}: complete id not found in registry body"
+            )
     return problems
-
-
-def file_digest(path: Path) -> str:
-    """sha256 hex digest of a file's bytes (content-hash self-assertion support)."""
-    return hashlib.sha256(path.read_bytes()).hexdigest()
