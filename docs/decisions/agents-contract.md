@@ -38,7 +38,7 @@ La v1.0 fijó el contrato único en la **raíz del repositorio de producto**. La
 La v2.1 separó la arquitectura de capacidades del registry operativo:
 
 - `catalogo/skill-registry.md` era arquitectura de capacidades; pasó a `framework/guias/skill-architecture.md`.
-- El registry operativo vive en `runtime/catalogo/skill-registry.md` (bootstrap con 0 skills) y se instala como `catalogo/skill-registry.md`.
+- El registry operativo vive en `runtime/catalogo/skill-registry.md` (bootstrap creado con 0 skills; hoy declara la skill `f0-factibilidad`) y se instala como `catalogo/skill-registry.md`.
 - `AGENTS.md` (fuente e instalado) apunta a `catalogo/skill-registry.md` — el registry operativo instalado —, **no** a `framework/guias/skill-architecture.md`.
 
 La v2.2 mantiene todo lo anterior y lo concilia con PRD 1:
