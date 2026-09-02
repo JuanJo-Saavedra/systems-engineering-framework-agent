@@ -25,7 +25,7 @@ skills_available: 1
 
 | id | trigger | ruta |
 | -- | ------- | ---- |
-| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; problema, CONOPS, ROM, riesgos, Go/No-Go | `.agents/skills/f0-factibilidad/SKILL.md` |
+| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; necesidad, problema, stakeholders, CONOPS, ROM, riesgos, factibilidad, Go/No-Go y readiness de MCR | `.agents/skills/f0-factibilidad/SKILL.md` |
 
 ## Estado de la verificación
 
