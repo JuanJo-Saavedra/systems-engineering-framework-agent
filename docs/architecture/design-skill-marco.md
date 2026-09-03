@@ -1,7 +1,7 @@
 ---
 document_type: arquitectura_plantilla_skills
 language: es
-version: 1.0
+version: 1.1
 status: canonico
 ---
 # Plantilla canónica para diseñar skills operativas desde el marco
@@ -15,10 +15,11 @@ Este documento es la **plantilla duradera** para diseñar toda skill operativa f
 ## Quick path
 
 1. Identificar la capacidad en el [catálogo](../../framework/guias/skill-architecture.md) y su tipo.
-2. Completar la [hoja de diseño](#hoja-de-diseño-previa-a-la-implementación).
-3. Escribir la skill con la [plantilla de secciones](#plantilla-de-skill-de-fase) y sus contratos.
-4. Seguir el [flujo de implementación](#flujo-de-implementación-y-checklist-pre-commit).
-5. Validar con tests generales y una revisión humana de fidelidad semántica.
+2. Consultar el contrato de dominio en `framework/marco/**` y las plantillas de los archivos de proyecto afectados en `framework/proyecto/**`.
+3. Completar la [hoja de diseño](#hoja-de-diseño-previa-a-la-implementación).
+4. Escribir la skill con la plantilla correspondiente a su tipo y sus contratos.
+5. Seguir el [flujo de implementación](#flujo-de-implementación-y-checklist-pre-commit).
+6. Validar con tests generales y una revisión humana de fidelidad semántica.
 
 ## Modelo de cuatro capas y sus autoridades
 
@@ -46,12 +47,19 @@ src/se_agent/_payload/**
 | Skills operativas | `runtime/skills/**/SKILL.md` | Comportamiento ejecutable de una capacidad. Implementa; nunca redefine el dominio. | Autores del producto. |
 | Espejo de empaquetado | `src/se_agent/_payload/**` | Ninguna. Copia byte a byte de lo instalable. | Generado por el packager. |
 
+**Contratos complementarios que no agregan una capa a la transformación:**
+
+- **Plantilla de proyecto** (`framework/proyecto/**`): fuente de consulta para las rutas, la estructura y el vocabulario común de los archivos que cada proyecto administra. Define la forma esperada, no el estado real de una ejecución.
+- **Instancia de proyecto** (`proyecto/**`): autoridad sobre el contenido vivo del proyecto concreto —estado, hitos, artefactos y registros—. Cada proyecto es propietario de estos archivos y conserva continuidad histórica sobre la plantilla común.
+
+La skill se diseña consultando `framework/proyecto/**`, pero en runtime lee la instancia `proyecto/**`; nunca presenta la plantilla como evidencia del proyecto ni escribe en `framework/proyecto/**`.
+
 **Artefactos de inventario que NO son capas de autoridad:**
 
 - **Registry operativo** (`runtime/catalogo/skill-registry.md`, instalado como `catalogo/skill-registry.md`): inventario **manual** de skills disponibles. CI y tests verifican su coherencia bidireccional con `runtime/skills/` y nunca lo generan ni modifican. No duplica el routing ni las guardas.
 - **Índice técnico del harness** (`.atl/skill-registry.md`): índice **generado**, exclusivo del harness de desarrollo, de alcance técnico. No se empaqueta, no se instala y no debe fusionarse con el catálogo.
 
-Regla: ninguna capa inferior (skill, subagente, índice, adaptador) es autoridad sobre el significado del dominio. El marco es fuente del dominio conceptual; el catálogo, del significado y routing; el registry, de la disponibilidad.
+Regla: ninguna capa inferior (skill, subagente, índice, adaptador) es autoridad sobre el significado del dominio. El marco es fuente del dominio conceptual; el catálogo, del significado y routing; `framework/proyecto/**`, de la plantilla común; la instancia `proyecto/**`, del estado y la evidencia del proyecto; el registry, de la disponibilidad.
 
 ## Contrato de transformación marco → skill
 
@@ -72,6 +80,7 @@ La transformación **preserva** estos elementos del contrato de dominio:
 | Madurez | La madurez esperada de la ficha del catálogo. |
 | Criterios de cierre | Los del marco, íntegros y sin modificaciones. |
 | Handoff | La preparación de la fase siguiente, separada de la autorización. |
+| Estado e hitos | Las fuentes de estado que consulta y la propuesta estructurada que entrega al padre, sin escritura autónoma. |
 | Límites de autoridad | Guardas, gates y reglas de decisión humana. |
 
 Lo que **cambia es la forma**: de descripción de dominio a comportamiento que actúa. Ejemplos aprobados:
@@ -101,7 +110,7 @@ El catálogo usa **seis tipos** de capacidad, no tres familias:
 
 Reglas de mapeo:
 
-- **Una fase puede mapear a varias capacidades.** `F1` se divide en `f1_stakeholders_preliminar` (fase, madurez `preliminar`), `handoff_presupuesto_a_proyecto` (transición) y `f1_stakeholders_formal` (fase, madurez `formal`). El diseño decide por capacidad ejecutable, no por fase.
+- **Una fase puede mapear a varias capacidades.** `F1` se divide en `f1_stakeholders_preliminar` (fase, madurez `preliminar`), `handoff_presupuesto_a_proyecto` (transición) y `f1_stakeholders_formal` (fase, madurez `formal`). El diseño decide por capacidad ejecutable, no por fase. En este caso el handoff se ejecuta después de la decisión humana de aprobación y consolida el pase desde presupuesto hacia `F1 formal`; no sustituye ninguno de los dos modos de fase.
 - **Una skill de fase compone, no duplica.** Indica qué transversales y tareas puntuales entran en su alcance y con qué alcance específico (p. ej., en F0 `riesgos` siempre, `requisitos` solo a nivel de necesidad preliminar); no reproduce la técnica completa de la capacidad transversal.
 - **Cobertura pendiente:** `datos_y_documentacion` y `lecciones_aprendidas` no existen como fichas del catálogo y reciben tratamientos provisionales distintos. `datos_y_documentacion` puede manejarse provisionalmente solo como trazabilidad de evidencia (procedencia y cita de fuente) cuando la fase lo requiera, sin fingir que existe una capacidad dedicada. `lecciones_aprendidas` sigue siendo una decisión de cobertura pendiente: no se absorbe implícitamente y sus registros autoritativos específicos de fase solo se tocan cuando el marco o el catálogo lo exigen explícitamente.
 
@@ -123,6 +132,21 @@ Estas son las **once secciones por defecto de toda skill de fase**. Las demás c
 | 10 | Cierre, recomendación y handoff | Los tres juicios separados (recomendación técnica, readiness, decisión humana) y los vacíos que bloquean el handoff. | Autoaprobar cierre, transición o presupuesto; mezclar recomendación con decisión. |
 | 11 | Referencias | Fuentes autoritativas de dominio y registros, en las rutas instaladas (`marco/…`, `proyecto/…`). | Referencias no instaladas o inventadas; silenciar faltantes. |
 
+## Plantilla de skill de transición
+
+Una transición no ejecuta el contrato completo de una fase: consolida un cambio de estado ya autorizado, preserva lo heredado y explicita los vacíos de entrada al estado siguiente. Estas son sus secciones por defecto; puede adaptarlas cuando la ficha del catálogo o el marco exijan información adicional, sin omitir el contrato de estado.
+
+| # | Sección | Debe contener | Evitar |
+| -- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 1 | Objetivo y alcance de la transición | Estado de origen, estado de destino, resultado de la consolidación y decisión humana que la habilita. | Ejecutar trabajo propio de las fases de origen o destino. |
+| 2 | Disparador y precondiciones | Hito o decisión requerida, consistencia mínima de estado y regla fail-closed ante evidencia ausente. | Inferir una aprobación o tratar readiness como autorización. |
+| 3 | Fuentes autoritativas | Archivos vivos de `proyecto/estado/`, `proyecto/hitos/`, artefactos heredados y registros afectados. | Usar `framework/proyecto/**` como si fuera evidencia de la instancia. |
+| 4 | Capacidades operacionales | Validar el hito, inventariar insumos, detectar vacíos y preservar procedencia y continuidad. | Rehacer artefactos heredados o aplicar una secuencia fija sin mirar estado. |
+| 5 | Registros que continúan | Registros transversales que siguen activos, su estado y los vacíos que pasan al estado siguiente. | Abrir registros paralelos o perder historia. |
+| 6 | Salidas y propuesta de estado | Handoff consolidado y bloque estructurado de actualizaciones propuestas para que el padre las valide e integre. | Escribir directamente estado, hitos o registros. |
+| 7 | Cierre y autoridad | Criterios de transición, bloqueos pendientes y separación entre evaluación técnica, readiness y autorización humana. | Autoaprobar o declarar completada una transición incoherente. |
+| 8 | Referencias | Contratos del marco, ficha del catálogo y rutas instaladas de la instancia. | Referencias inventadas o solo disponibles en el repositorio fuente. |
+
 ## Reglas operacionales transversales
 
 Toda skill operativa respeta estas reglas, sin repetir justificación en cada una:
@@ -133,11 +157,49 @@ Toda skill operativa respeta estas reglas, sin repetir justificación en cada un
 | Modelo de evidencia | Toda salida distingue explícitamente `hechos verificados`, `supuestos`, `vacíos` y `contradicciones`. |
 | Preguntas progresivas | Se pregunta según la incertidumbre real; nunca se aplica un cuestionario fijo. |
 | Maduración de artefactos | Ante evidencia nueva se maduran los borradores y artefactos existentes; nunca se reinicia trabajo ya maduro ni se sobrescribe evidencia en silencio. |
-| Rutas autoritativas | Si el artefacto tiene ubicación autoritativa en `proyecto/`, se lee y se madura allí. |
-| `ubicación pendiente` | Si un artefacto obligatorio no tiene ubicación autoritativa, se entrega como borrador estructurado marcado `ubicación pendiente`, sin inventar rutas. |
+| Rutas autoritativas | `framework/proyecto/**` define la plantilla común; en runtime, si el artefacto tiene ubicación autoritativa en la instancia `proyecto/`, se lee y se madura allí. |
+| `ubicación pendiente` | Si un artefacto obligatorio no tiene ubicación autoritativa en la instancia, se entrega como borrador estructurado marcado `ubicación pendiente`, sin inventar rutas. La existencia de una carpeta reservada en la plantilla no basta para inventar un archivo. |
 | No inventar | No se inventan estado, entregables, rutas, evidencia ni contenido para llenar un vacío; los faltantes se declaran. |
-| Single-writer | Solo el orquestador padre consolida actualizaciones en los documentos autoritativos; los ejecutables producen salidas que el padre integra. |
+| Single-writer | Solo el orquestador padre consolida actualizaciones en los documentos autoritativos de la instancia; las skills producen propuestas estructuradas con base y procedencia. |
+| Consistencia de estado | Una transición que afecta estado global, estado de fase e hito se propone como un único cambio coherente; el padre valida sus precondiciones y evita estados parciales antes de persistirlo. |
 | Fail-closed | La evidencia no crítica faltante no bloquea: se producen borradores estructurados con los vacíos declarados de forma explícita. La ausencia de evidencia requerida sí bloquea el cierre de fase, las reviews y baselines formales y las transiciones; se solicita su restauración. La disponibilidad de skills no cambia esta regla. |
+
+## Contrato de estado, hitos y actualizaciones propuestas
+
+Las plantillas de `framework/proyecto/**` fijan las rutas y la forma común que las skills deben conocer. Sus equivalentes dentro de la instancia contienen el estado real:
+
+| Archivo de la instancia | Contrato que aporta | Uso por las skills |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `proyecto/estado/proyecto_actual.md` | Estado global, fase y madurez activas, estado del handoff y fecha de actualización. | Determinar routing y proponer el estado global resultante. |
+| `proyecto/estado/estado_fases.md` | Estado por fase, madurez esperada, review asociada y observaciones. | Evaluar readiness de la fase y proponer cambios de estado o madurez. |
+| `proyecto/hitos/hito_aprobacion_trabajo.md` | Decisión humana, autorización de inicio, alcance aprobado, insumos heredados, vacíos y registros que continúan. | Validar o consolidar el pasaje de presupuesto a proyecto aprobado. |
+| `proyecto/fases/**` | Instancias concretas de los artefactos de fase que el proyecto haya creado. | Madurar solo artefactos existentes; si no existe ruta autoritativa, usar `ubicación pendiente`. |
+| `proyecto/registros/**` | Registros transversales continuos durante todo el ciclo de vida. | Proponer actualizaciones sobre los mismos registros, sin abrir copias paralelas. |
+
+### Salida de skill hacia el orquestador padre
+
+Cuando una capacidad pueda afectar el estado, su salida incluye un bloque reconocible de **propuesta de actualización**, con:
+
+- fuente y estado observado;
+- precondiciones verificadas y evidencia de la decisión humana requerida;
+- campos o filas cuyo cambio se propone, expresados como valor anterior → valor propuesto;
+- justificación y procedencia;
+- vacíos, contradicciones o bloqueos que impiden persistir el cambio;
+- artefactos y registros que deben conservar continuidad.
+
+La propuesta no es una orden ni una autorización. El padre relee las fuentes autoritativas, comprueba que no hayan cambiado, valida las reglas del ciclo y recién entonces integra el cambio de manera coherente. La skill nunca modifica por sí sola `proyecto_actual.md`, `estado_fases.md` ni un hito de aprobación.
+
+### Transición de presupuesto a proyecto aprobado
+
+El flujo canónico de F1 separa claramente preparación, decisión, consolidación y ejecución formal:
+
+1. `f1_stakeholders_preliminar` reúne material para cotizar y evalúa readiness frente al `hito_aprobacion_trabajo`; no aprueba el trabajo.
+2. Un humano emite la decisión de aprobación y autoriza —o no— el inicio formal.
+3. `handoff_presupuesto_a_proyecto` se activa ante esa decisión aprobatoria, consolida el hito, los insumos heredados, los vacíos antes de `F2` y los registros transversales que continúan.
+4. El orquestador padre persiste de forma consistente el hito completo, el estado global `aprobado_en_transicion` y el enrutamiento `active_phase: F1` + `active_maturity: formal`; la fila `F1 formal` permanece `no_iniciada` hasta que su propia capacidad de fase comience el trabajo formal.
+5. `f1_stakeholders_formal` completa los vacíos heredados. `F2` permanece `no habilitada` —su fila sigue `no_iniciada`, protegida por el gate de paso a `F2`— hasta que se cumplan los criterios de cierre formal de F1; su estado de fase no adopta el valor `bloqueada`.
+
+Si falta la decisión aprobatoria, `project_start_authorized` no es verdadero, el hito está incompleto o las fuentes de estado se contradicen, la transición queda bloqueada y la skill informa el conflicto sin inferir ni fabricar valores.
 
 ## Review, baseline y handoff: autoridad y separación
 
@@ -203,7 +265,9 @@ Completar esta hoja antes de escribir código; las respuestas provienen del cat�
 - Cierre y handoff: <qué evalúa la skill; qué decide el humano>
 - Límites de autoridad: <qué nunca autoriza la skill>
 - Nombre ejecutable: <kebab-case> (directorio + frontmatter + registry)
-- Decisiones de persistencia: <qué registros actualiza y dónde; borradores `ubicación pendiente`>
+- Fuentes de estado e hitos: <rutas de `proyecto/estado/**` y `proyecto/hitos/**` que consulta>
+- Propuesta de actualización: <campos o filas que podría proponer al padre, precondiciones y evidencia humana requerida>
+- Decisiones de persistencia: <qué registros propone actualizar y dónde; continuidad histórica; borradores `ubicación pendiente`>
 - Gaps sin resolver: <cobertura pendiente del catálogo, decisiones abiertas>
 ```
 
@@ -227,7 +291,9 @@ Flujo secuencial (es una plantilla de mantenedor, no un procedimiento de runtime
 Checklist pre-commit:
 
 - [ ] La ficha del catálogo existe y su binding refleja la realidad del enlace.
-- [ ] La skill preserva los 12 elementos del contrato de transformación.
+- [ ] La skill preserva todos los elementos del contrato de transformación, incluido el contrato de estado e hitos cuando aplica.
+- [ ] Las rutas y estructuras consultadas coinciden con `framework/proyecto/**`, sin tratar la plantilla como evidencia viva.
+- [ ] Toda mutación de estado o hito se expresa como propuesta para el padre, con precondiciones y autoridad humana explícitas.
 - [ ] El registry fue actualizado a mano y es coherente con `runtime/skills/`.
 - [ ] El espejo del payload está sincronizado (o no hay rutas mapeadas tocadas).
 - [ ] La suite de tests pasa.
@@ -251,6 +317,7 @@ Checklist pre-commit:
 
 ## Relacionado
 
+- [`docs/architecture/design-f1-stakeholders-handoff.md`](design-f1-stakeholders-handoff.md) — diseño concreto de las capacidades de `F1`: `f1_stakeholders_preliminar` y `handoff_presupuesto_a_proyecto` (hojas de diseño completas).
 - [`framework/guias/skill-architecture.md`](../../framework/guias/skill-architecture.md) — catálogo canónico de capacidades, routing y bindings.
 - [`docs/decisions/skill-artifacts.md`](../decisions/skill-artifacts.md) — decisión canónica de las capas de autoridad y el registry operativo.
 - [`docs/decisions/agents-contract.md`](../decisions/agents-contract.md) — decisión canónica del contrato único de `AGENTS.md`.
@@ -261,3 +328,6 @@ Checklist pre-commit:
 - [`docs/guides/quickstart.md`](../guides/quickstart.md) — flujo mínimo de uso.
 - [`runtime/AGENTS.md`](../../runtime/AGENTS.md) — contrato de runtime (instalado como `AGENTS.md`).
 - [`framework/marco/README.md`](../../framework/marco/README.md) — índice del marco metodológico.
+- [`framework/proyecto/estado/proyecto_actual.md`](../../framework/proyecto/estado/proyecto_actual.md) — plantilla del estado global de una instancia.
+- [`framework/proyecto/estado/estado_fases.md`](../../framework/proyecto/estado/estado_fases.md) — plantilla del estado por fase.
+- [`framework/proyecto/hitos/hito_aprobacion_trabajo.md`](../../framework/proyecto/hitos/hito_aprobacion_trabajo.md) — plantilla del hito que habilita el handoff desde presupuesto.

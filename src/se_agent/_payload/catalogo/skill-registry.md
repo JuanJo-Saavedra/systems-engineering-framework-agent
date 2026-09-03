@@ -16,7 +16,9 @@ Este registry es el índice de disponibilidad de skills instaladas. Su función 
 
 | Skill / id | Contexto o trigger | Tipo / alcance | Ruta instalada |
 | ---------- | ------------------ | -------------- | -------------- |
-| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; necesidad, problema, stakeholders, CONOPS, ROM, riesgos, factibilidad, Go/No-Go y readiness de MCR | Skill de fase (F0) | `.agents/skills/f0-factibilidad/SKILL.md` |
+| `f0-factibilidad` | Fase F0 activa / estado `preproyecto_presupuesto`; necesidad, problema, stakeholders, CONOPS, ROM, riesgos, factibilidad, Go/No-Go y readiness de MCR | fase | `.agents/skills/f0-factibilidad/SKILL.md` |
+| `f1-stakeholders-preliminar` | estado preproyecto_presupuesto con fase F1 preliminar activa; necesidades preliminares, stakeholders, escenarios operativos, restricciones externas, matriz necesidad-requisito, material para cotizar y readiness frente al hito de aprobación del trabajo. | fase | `.agents/skills/f1-stakeholders-preliminar/SKILL.md` |
+| `handoff-presupuesto-a-proyecto` | decisión aprobatoria del usuario sobre el trabajo emitida con F1 preliminar cerrada; consolidación del hito de aprobación del trabajo (insumos heredados y vacíos antes de F2) y transición de `preproyecto_presupuesto` a `aprobado_en_transicion`. | transición | `.agents/skills/handoff-presupuesto-a-proyecto/SKILL.md` |
 
 ## Protocolo de carga
 
