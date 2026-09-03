@@ -130,7 +130,7 @@ Las etiquetas describen hasta dónde llega el enlace ejecutable de una capacidad
 | `mapeada` | Existe un enlace declarado a una skill o subagente, sin verificación de comportamiento completa. |
 | `verificada` | El enlace pasó pruebas de comportamiento (selección, degradación, fronteras). |
 
-Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy solo `f0_factibilidad` declara un enlace (`mapeada`).
+Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar` y `handoff_presupuesto_a_proyecto` declaran enlaces (`mapeada`).
 
 En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de forma global cuando el valor era uniforme para todo el catálogo. Desde v2.2 la regla es **valor por defecto global + anulación por ficha**: una ficha que declara sus propios campos `estado_implementacion` y `bindings` anula el valor por defecto solo para esa capacidad; el resto del catálogo permanece bajo el valor global.
 
@@ -213,6 +213,8 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - escenarios de uso,
   - restricciones externas,
   - base para cotización.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `f1_stakeholders_preliminar` → skill `f1-stakeholders-preliminar` (`runtime/skills/f1-stakeholders-preliminar/SKILL.md`; instalada como `.agents/skills/f1-stakeholders-preliminar/SKILL.md`).
 
 #### `handoff_presupuesto_a_proyecto`
 
@@ -228,6 +230,8 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - hito de aprobación consolidado,
   - lista de insumos heredados,
   - lista de vacíos a cerrar antes de `F2`.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `handoff_presupuesto_a_proyecto` → skill `handoff-presupuesto-a-proyecto` (`runtime/skills/handoff-presupuesto-a-proyecto/SKILL.md`; instalada como `.agents/skills/handoff-presupuesto-a-proyecto/SKILL.md`).
 
 #### `f1_stakeholders_formal`
 
