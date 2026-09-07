@@ -1,7 +1,7 @@
 ---
 document_type: arquitectura_producto
 language: es
-version: 3.0
+version: 3.2
 status: adoptada
 ---
 
@@ -9,20 +9,21 @@ status: adoptada
 
 ## Decisión ejecutiva
 
-**PRD 1 ([`docs/prd/prd-001-one-shot-codex-scaffolder.md`](../prd/prd-001-one-shot-codex-scaffolder.md), aprobado) define el MVP.** Esta v3.0 concilia la arquitectura con ese PRD y **supersede la v2.2** en todo lo que contradiga: distribución, comandos, propiedad de archivos instalados y modelo del registry.
+**PRD 1 ([`docs/prd/prd-001-one-shot-codex-scaffolder.md`](../prd/prd-001-one-shot-codex-scaffolder.md), aprobado) define el MVP.** Esta v3.2 concilia la arquitectura con ese PRD y documenta el núcleo `docs-review` implementado, sin alterar sus límites de distribución, comandos, propiedad de archivos instalados y modelo del registry.
 
-El producto se distribuye como **paquete Python `se_agent` (CLI `se-agent`, Python `>=3.12`) instalable con `pipx` desde el ZIP expuesto por un tag SemVer inmutable de GitHub**. Sin PyPI y sin EXE portátil en el MVP. Es un **scaffolder one-shot**: `se-agent init --harness codex --target .` escribe exactamente el payload declarado (PRD 1, §7) y termina. Los archivos instalados son **100 % propiedad del consumidor** desde el momento posterior a `init`: no hay manifiesto, hashes, `.framework-agent/`, `update`, `doctor`, `uninstall`, migraciones, copias gestionadas ni detección de deriva. El ciclo de vida gestionado queda registrado como **propuesta futura**, no como comportamiento parcial del MVP.
+El producto se distribuye como **paquete Python `se_agent` (CLI `se-agent`, Python `>=3.12`) instalable con `pipx` desde el ZIP expuesto por un tag SemVer inmutable de GitHub**. Python participa solo en este flujo one-shot de instalación (`se-agent init`); la operación documental del núcleo `docs-review` implementado usa Windows PowerShell 5.1 + .NET y no requiere Python después del scaffolding. Sin PyPI y sin EXE portátil en el MVP. Es un **scaffolder one-shot**: `se-agent init --harness codex --target .` escribe exactamente el payload declarado (PRD 1, §7) y termina. Los archivos instalados son **100 % propiedad del consumidor** desde el momento posterior a `init`: no hay manifiesto, hashes, `.framework-agent/`, `update`, `doctor`, `uninstall`, migraciones, copias gestionadas ni detección de deriva. El ciclo de vida gestionado queda registrado como **propuesta futura**, no como comportamiento parcial del MVP.
 
 El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entregables, evidencia ni esquemas de proyecto. `framework/guias/` **no** se instala en consumidores: es base de diseño, comportamiento y accionamiento del producto. El repositorio `proyecto-base` no es fuente canónica del marco: es un **fixture de consumo y aceptación** con copias instaladas propiedad del consumidor.
 
 | Punto | Decisión adoptada |
 | --- | --- |
 | Autoridad de requisitos | PRD 1 aprobado ([`docs/prd/prd-001-one-shot-codex-scaffolder.md`](../prd/prd-001-one-shot-codex-scaffolder.md)); este documento concilia la arquitectura con él. |
-| Producto/CLI | `se-agent`; módulo Python `se_agent`; Python `>=3.12` (implementación pendiente). |
+| Producto/CLI | `se-agent`; módulo Python `se_agent`; Python `>=3.12` (implementado). |
 | Distribución | `pipx` instala el ZIP del tag SemVer inmutable de GitHub. Sin PyPI, sin EXE portátil. Tag, versión del paquete y `se-agent --version` coinciden. |
 | Modelo de instalación | One-shot. `init` escribe el payload (PRD 1, §7) y termina; lo instalado es del consumidor. |
 | Comandos en MVP | `se-agent init --harness codex --target .` y `se-agent --version`. Nada más. |
-| Manifiesto / hashes / `update` / `doctor` / `uninstall` / migraciones / deriva / generador de registry | **Ninguno existe en el MVP.** Ciclo de vida gestionado = propuesta futura. |
+| Núcleo runtime `docs-review` | Implementado como skill, backend PowerShell 5.1 + .NET, contrato de manifest, catálogo, registry y payload. No es un comando CLI de usuario: tras `init`, el padre lógico compone y Codex ejecuta el contrato ya seleccionado bajo autorización conversacional humana; sin Python de runtime. El gate estático Linux pasó 8/8, pero falta la ejecución conductual de `tests/powershell/docs_review.tests.ps1` en Windows PowerShell Desktop 5.1; no hay CI Windows por decisión humana. La skill consumidora F1 (`f1-stakeholders-formal`) está implementada como skill de fase pura: emite la especificación de paquete al padre, que compone `docs-review` ante autorización humana. |
+| Manifiesto / hashes / `update` / `doctor` / `uninstall` / migraciones / deriva / generador de registry del scaffolder | **Ninguno existe en el MVP del scaffolder.** El manifest y los hashes propios de paquetes `docs-review` no crean ciclo de vida gestionado para `se-agent`; `update`, `doctor`, `uninstall`, migraciones, deriva y generación de registry siguen fuera del MVP. |
 | Frontera de escritura | Solo el payload de §7 del PRD. Preflight completo antes de la primera escritura; colisiones `[y/N]` en interactivo, `--force` en no interactivo; `--force` no escapa del write-set; `proyecto/` intocable siempre; se rechazan escapes por `..` y symlinks. |
 | Registry operativo | `runtime/catalogo/skill-registry.md`, **mantenido a mano** por los autores del producto. CI/tests verifican coherencia bidireccional con `runtime/skills/` y nunca generan ni modifican el registry. |
 | Árbol de implementación | Árbol por capas ejecutado: `framework/`, `runtime/`, `adapters/codex/`, `tests/{unit,integration,fixtures}`, `release/`, `docs/`. |
@@ -30,11 +31,11 @@ El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entr
 | Guías canónicas del framework | `framework/guias/`; **no** se instalan en consumidores. |
 | Arquitectura de capacidades | `framework/guias/skill-architecture.md` (autoridad de significado conceptual; separada del registry operativo). |
 | Contrato instalable | `runtime/AGENTS.md` es la **única** fuente; no hay `AGENTS.md` en raíz del repo de producto; en el consumidor se instala como `AGENTS.md` de raíz. |
-| Skills | `runtime/skills/` → `.agents/skills/`. Contiene la skill F0 funcional (`f0-factibilidad`), registrada en el registry operativo y reflejada en el payload; capacidades adicionales pendientes de mapear. |
+| Skills | `runtime/skills/` → `.agents/skills/`. Incluye `docs-review`, registrada en el registry operativo y reflejada en el payload, además de las skills de fase ya disponibles, incluida la consumidora `f1-stakeholders-formal` (skill de fase pura). |
 | Contratos runtime harness-neutral | `runtime/agents/`. Sin destino de instalación definido en el MVP (seguimiento abierto, PRD 1 §12); no se instala. |
-| Específico de Codex | `adapters/codex/` (`.codex/config.toml`, `.codex/agents/*.toml`). Artefactos **por crear**; exponen mecanismos, nunca reglas de dominio. |
+| Específico de Codex | `adapters/codex/` (`.codex/config.toml`, `.codex/agents/*.toml`). Artefactos implementados; exponen mecanismos, nunca reglas de dominio. |
 | Instalador | El enfoque `installer/windows/` (comandos y empaquetado portable EXE) quedó **obsoleto** con PRD 1; lo sustituye el paquete Python `se_agent`. |
-| Tests | `tests/{unit,integration,fixtures}` (estructura creada; pruebas de comportamiento pendientes). |
+| Tests | `tests/{unit,integration,fixtures}` más suite nativa sin Pester en `tests/powershell/`. Para `docs-review`, el gate estático Linux pasó 8/8; su prueba conductual en Windows PowerShell Desktop 5.1 está pendiente y no hay CI Windows por decisión humana. |
 | Publicación | `release/` contiene fuentes de publicación; el artefacto de distribución es el ZIP del tag (fuente automática de GitHub). Sin manifiesto ni hashes de release. |
 | Histórico | `docs/history/` completo es deprecated, histórico, no autoritativo y no participa en generación. |
 | Write-set instalado | `marco/`, `AGENTS.md` raíz, `catalogo/skill-registry.md`, `.agents/skills/`, `.codex/` (PRD 1, §7). |
@@ -44,12 +45,12 @@ El producto **nunca** accede ni modifica `proyecto/`, sus registros, hitos, entr
 
 ## Propósito
 
-Este documento es el handoff de arquitectura para el repositorio `systems-engineering-framework-agent`. Fija qué se construye, qué se instala y qué queda fuera, y registra la frontera que impide que la herramienta toque datos de proyecto. La v2.0 adoptó la **topología por capas**; la v2.1 añadió la separación entre **arquitectura de capacidades** y **registry operativo**; la v2.2 registró la reestructuración física ejecutada; la **v3.0 concilia la arquitectura con PRD 1 aprobado** (scaffolder one-shot, distribución pipx, propiedad del consumidor, registry manual).
+Este documento es el handoff de arquitectura para el repositorio `systems-engineering-framework-agent`. Fija qué se construye, qué se instala y qué queda fuera, y registra la frontera que impide que la herramienta toque datos de proyecto. La v2.0 adoptó la **topología por capas**; la v2.1 añadió la separación entre **arquitectura de capacidades** y **registry operativo**; la v2.2 registró la reestructuración física ejecutada; la **v3.0 concilió la arquitectura con PRD 1 aprobado** (scaffolder one-shot, distribución pipx, propiedad del consumidor, registry manual); la **v3.1** añadió la separación de diseño entre instalación Python one-shot y operación documental `docs-review` en PowerShell; la **v3.2** registra el núcleo `docs-review` implementado y la verificación conductual PS5.1 aún pendiente.
 
 ## Autoridad y ruta de revisión
 
 - **Autoridad de requisitos**: PRD 1, aprobado. Este documento registra la arquitectura conciliada con él; no reabre decisiones del PRD.
-- **Estado**: `adoptada` (v3.0). Supersede la v2.2 y anteriores en lo que contradiga PRD 1. Cambios posteriores se tramitan por revisión normal del repositorio de producto.
+- **Estado**: `adoptada` (v3.1). Supersede la v2.2 y anteriores en lo que contradiga PRD 1. Cambios posteriores se tramitan por revisión normal del repositorio de producto.
 - **Ruta de revisión**: los artefactos de implementación que se deriven (paquete `se_agent`, payload del adaptador, verificaciones de CI) se revisan contra PRD 1 y este documento.
 - **Qué revisar primero**: la decisión ejecutiva, la separación arquitectura de capacidades vs registry operativo (sección 3 y `docs/decisions/skill-artifacts.md`), la topología (sección 4), los árboles fuente e instalado (sección 5), la frontera de escritura y propiedad (sección 6), los riesgos (sección 13) y los pendientes de implementación (sección 14).
 
@@ -60,7 +61,7 @@ El sistema completo se compone de tres subsistemas con responsabilidades distint
 | Subsistema | Ubicación lógica | Responsabilidad | ¿En el MVP? |
 | --- | --- | --- | --- |
 | Framework (dominio) | `framework/marco/` (instalado como `marco/`) | Proceso de ingeniería: fases `F0`–`F8`, reviews, baselines, glosario, reglas. | Sí (empaquetado en el payload). |
-| Agente/runtime Codex | `runtime/` + `adapters/codex/` (instalados por `se-agent`) | Contrato, skills y artefactos que Codex usa para ejecutar el proceso; el scaffolder solo los instala. | Sí (implementación pendiente). |
+| Agente/runtime Codex | `runtime/` + `adapters/codex/` (instalados por `se-agent`) | Contrato, skills y artefactos que Codex usa para ejecutar el proceso; el scaffolder solo los instala. | Sí (árbol implementado). |
 | Proyecto consumidor | `proyecto/` en el destino | Instancia viva: estado, hitos, registros, entregables, evidencia. | No (es el fixture de aceptación; el producto no lo gestiona). |
 
 > El producto `systems-engineering-framework-agent` reúne **framework + runtime/agente + scaffolder `se-agent`**. El proyecto consumidor no se empaqueta ni se migra; el producto lo respeta como intocable durante `init` (y en cualquier otro comando, porque solo existen `init` y `--version`).
@@ -151,18 +152,21 @@ systems-engineering-framework-agent/
 │       └── project-init.md             # guía de arranque (curada desde el histórico)
 ├── runtime/
 │   ├── AGENTS.md                       # única fuente del contrato instalable (no hay AGENTS.md en raíz)
-│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (skill F0: f0-factibilidad)
+│   ├── skills/                         # skills ejecutables → .agents/skills/<skill>/SKILL.md (incluye docs-review)...
 │   ├── agents/                         # contratos runtime harness-neutral (sin destino de instalación definido)
 │   └── catalogo/
-│       └── skill-registry.md           # registry operativo (1 skill: f0-factibilidad, manual) → catalogo/skill-registry.md
+│       └── skill-registry.md           # registry operativo manual (incluye docs-review) → catalogo/skill-registry.md
 ├── adapters/
-│   └── codex/                          # artefactos Codex (por crear): config.toml + agents/*.toml
+│   └── codex/                          # artefactos Codex: config.toml + agents/*.toml
+├── src/
+│   └── se_agent/                       # paquete Python de la CLI se-agent y payload instalado
 ├── installer/
 │   └── windows/                        # OBSOLETO (enfoque EXE portátil retirado por PRD 1)
 ├── tests/
 │   ├── unit/
 │   ├── integration/
-│   └── fixtures/
+│   ├── fixtures/
+│   └── powershell/                     # suite nativa docs-review, pendiente de ejecución en PS5.1
 ├── release/                            # fuentes de publicación (tag SemVer → ZIP)
 ├── docs/
 │   ├── architecture/
@@ -176,7 +180,7 @@ systems-engineering-framework-agent/
 
 > `.atl/` (índice técnico del harness) es solo desarrollo, está en `.gitignore` y no forma parte del árbol empaquetado.
 
-> El paquete Python `se_agent` (código de la CLI) no existe todavía; su ubicación interna se define al implementarlo y no altera las rutas canónicas del payload.
+> El paquete Python `se_agent` contiene el código de la CLI y el payload empaquetado; su ubicación `src/se_agent/` no altera las rutas canónicas del payload.
 
 ### 5.2 Árbol instalado (proyecto destino)
 
@@ -226,7 +230,8 @@ Superficie prohibida (nunca se accede para escribir):
 | `se-agent init --harness codex --target .` | Preflight (destino, rutas, colisiones) e instala el write-set (PRD 1, §7). Sin manifiesto ni estado adicional. |
 | `se-agent --version` | Imprime la versión SemVer, idéntica al tag y a `pyproject.toml`. |
 
-- **No existen en el MVP**: `update`, `doctor`, `uninstall`, migraciones, generación de registry. El ciclo de vida gestionado (actualización con copias administradas) queda como **propuesta futura** a tratar en su propio PRD; nada del MVP lo implementa parcialmente.
+- **No existen en el MVP**: `update`, `doctor`, `uninstall`, migraciones, generación de registry ni comandos de review para que el usuario los escriba. El ciclo de vida gestionado (actualización con copias administradas) queda como **propuesta futura** a tratar en su propio PRD; nada del MVP lo implementa parcialmente.
+- **Review documental implementada:** la skill `docs-review` usa solo `runtime/skills/docs-review/scripts/docs_review.ps1` sobre Windows PowerShell 5.1 + .NET. Es detalle de runtime posterior al scaffolding, no amplía el CLI Python, no requiere Python en operación, ni usa `pwsh`, módulos/ejecutables externos o `ExecutionPolicy Bypass` automático. El gate estático Linux pasó 8/8; falta ejecutar `tests/powershell/docs_review.tests.ps1` en Windows PowerShell Desktop 5.1 y no hay CI Windows por decisión humana. La composición con `f1-stakeholders-formal` (ya implementada como skill de fase pura) la ejecuta el padre ante autorización humana explícita.
 - La organización/URL real de GitHub queda por definir (seguimiento abierto, PRD 1 §12).
 
 ## 8. Publicación
@@ -372,7 +377,6 @@ Los IDs son ayudas de bootstrap de la instancia Engram actual, no claves de domi
 
 | Dato pendiente | Por qué queda abierto |
 | --- | --- |
-| Implementación del paquete `se_agent` (CLI, payload, preflight) | Trabajo de implementación del MVP; no se decide aquí. |
 | Organización/URL de GitHub | Placeholder en PRD 1 (seguimiento abierto, §12). |
 | Destino de `runtime/agents/` (instalado o no) | Sin resolución; excluido del payload (seguimiento abierto, PRD 1 §12). |
 | Matriz de sistemas operativos objetivo | pipx es multiplataforma; por confirmar (seguimiento abierto, PRD 1 §12). |
@@ -380,10 +384,10 @@ Los IDs son ayudas de bootstrap de la instancia Engram actual, no claves de domi
 
 ## 14. Pendientes de implementación
 
-- [ ] Implementar el paquete `se_agent` con CLI `se-agent` (`init` y `--version`), preflight, protocolo de colisiones y frontera de escritura estricta (PRD 1, §5, §8–9).
+- [x] Implementar el paquete `se_agent` con CLI `se-agent` (`init` y `--version`), preflight, protocolo de colisiones y frontera de escritura estricta (PRD 1, §5, §8–9).
 - [ ] Configurar el pipeline de publicación: tag SemVer inmutable → ZIP → `pipx`; coherencia de versión (PRD 1, AC-1/AC-2).
 - [x] Poblar `runtime/skills/` con la skill F0 funcional (`f0-factibilidad`) y su entrada en el registry (PRD 1, AC-12).
-- [ ] Crear los artefactos del adaptador Codex en `adapters/codex/` (`.codex/config.toml` + agentes).
+- [x] Crear los artefactos del adaptador Codex en `adapters/codex/` (`.codex/config.toml` + agentes).
 - [x] Implementar la verificación de coherencia bidireccional registry ↔ `runtime/skills/` en tests/CI (PRD 1, AC-10), sin generación del registry.
 - [ ] Añadir las pruebas de comportamiento (payload exacto, `proyecto/` byte a byte, write-set, escapes de ruta, colisiones) según PRD 1, §10.
 - [ ] Definir la organización/URL de GitHub y sustituir el placeholder de PRD 1.
@@ -407,9 +411,9 @@ Rutas presentes en el árbol vigente:
 - `../../framework/guias/project-init.md` — guía de arranque (curada desde el histórico).
 - `../../framework/marco/README.md` — contenido del dominio.
 - `../../runtime/AGENTS.md` — contrato de runtime canónico.
-- `../../runtime/catalogo/skill-registry.md` — registry operativo (declara la skill `f0-factibilidad`; mantenido a mano).
+- `../../runtime/catalogo/skill-registry.md` — registry operativo (incluye `docs-review`; mantenido a mano).
 - `../../README.md` — resumen del producto.
 
-`runtime/skills/` es la ubicación vigente de las skills ejecutables (contiene la skill F0 `f0-factibilidad`) y no se lista como referencia individual.
+`runtime/skills/` es la ubicación vigente de las skills ejecutables (incluye el núcleo `docs-review`, cuya verificación conductual PS5.1 sigue pendiente) y no se lista como referencia individual.
 
 El estado autoritativo del proyecto vivo no vive en este repositorio: reside en el fixture `proyecto-base` (por ejemplo `proyecto/estado/proyecto_actual.md`, `proyecto/estado/estado_fases.md`, `proyecto/hitos/hito_aprobacion_trabajo.md`), y el producto lo respeta como intocable.

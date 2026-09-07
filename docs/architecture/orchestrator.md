@@ -1,7 +1,7 @@
 ---
 document_type: arquitectura
 language: es
-version: 0.3
+version: 0.4
 status: propuesta
 ---
 # Arquitectura del orquestador
@@ -10,7 +10,7 @@ status: propuesta
 
 ## Propósito
 
-Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como primer adaptador. El dominio de ingeniería de sistemas (`framework/marco/`, instalado como `marco/`) y la instancia de proyecto (`proyecto/`) no dependen de ningún harness; los adaptadores traducen contratos canónicos a artefactos ejecutables.
+Definir el arnés objetivo: un orquestador lógico **ejecutado dentro del harness Codex**, con Codex como primer mecanismo de ejecución. No existe otro padre fuera de Codex ni Codex es un router independiente: el padre lee estado, selecciona, resuelve, carga y compone contratos; Codex ejecuta el contrato ya seleccionado. El dominio de ingeniería de sistemas (`framework/marco/`, instalado como `marco/`) y la instancia de proyecto (`proyecto/`) no dependen de ningún harness; los adaptadores traducen contratos canónicos a artefactos ejecutables.
 
 ## Principio rector
 
@@ -26,7 +26,7 @@ Definir el arnés objetivo: un orquestador **harness-neutral** con Codex como pr
 | Registry operativo          | `runtime/catalogo/skill-registry.md` (instalado como `catalogo/skill-registry.md`) | Qué skill está disponible en runtime (mantenido a mano; verificación CI) |
 | Contratos canónicos         | fuente harness-neutral                                                             | Contrato entre dominio y ejecución                                       |
 | Skills de fase              | `runtime/skills/` (contratos ejecutables)                                          | Procedimiento operativo por capacidad                                    |
-| Orquestador padre           | sesión padre                                                                       | Leer estado, elegir skill, delegar, escribir                             |
+| Orquestador padre lógico    | sesión padre dentro de Codex                                                       | Leer estado, seleccionar/resolver/cargar/componer skills y escribir      |
 | Subagentes                  | subagentes                                                                         | Trabajo aislado o paralelo acotado                                       |
 | Adaptador Codex             | `adapters/codex/`                                                                  | Traducir contratos →`.agents/`, `.codex/`                                |
 | Integraciones MCP           | MCP                                                                                | Herramientas y memoria                                                   |
@@ -84,7 +84,11 @@ Codex usa **progressive disclosure**: expone la metadata de una skill para que e
 | Seleccionar la skill de fase correcta | Orquestador padre            |
 | Cargar/ejecutar la skill              | Harness (inline o subagente) |
 
-> No reclamar que Codex "evalúa triggers de fase nativamente". El padre lee `proyecto/estado/*` y elige la capacidad según la arquitectura de capacidades (`framework/guias/skill-architecture.md`, durante el diseño); en runtime resuelve/carga la skill solo desde el registry operativo (`runtime/catalogo/skill-registry.md`) + metadata del harness. El harness solo ejecuta la skill ya seleccionada.
+> No reclamar que Codex "evalúa triggers de fase nativamente" ni que enruta por su cuenta. El padre lógico, ejecutado dentro de Codex, lee `proyecto/estado/*`, elige la capacidad según la arquitectura de capacidades durante el diseño y, en runtime, resuelve/carga desde el registry operativo + metadata del harness. Codex solo ejecuta la skill o composición ya seleccionada.
+
+## Ejemplo de composición explícita: review documental
+
+Ante «Presentemos F1 formal a verificación», `f1_stakeholders_formal` aporta readiness y la especificación exacta de sus cuatro documentos al padre. El padre lógico, dentro de Codex, selecciona/resuelve/carga y compone `f1-stakeholders-formal` con `docs-review`. Codex ejecuta el contrato compuesto y, solo bajo la autorización humana explícita, el script interno ya seleccionado de `docs-review`. F1 no invoca otra skill y Codex no decide ese routing. `docs-review` es genérica; `preparacion_de_review` continúa reservada para los REVIEWS formales del marco.
 
 ## Asignación de capacidades
 

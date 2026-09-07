@@ -1,14 +1,14 @@
 ---
 document_type: arquitectura_plantilla_skills
 language: es
-version: 1.1
+version: 1.4
 status: canonico
 ---
 # Plantilla canónica para diseñar skills operativas desde el marco
 
 ## Regla adoptada
 
-> **Cada skill operativa incorpora íntegramente el contrato de su capacidad en `framework/marco`, lo operacionaliza y compone las capacidades transversales y de tarea puntual afectadas, sin exigir un orden fijo de ejecución.**
+> **Cada skill operativa incorpora íntegramente el contrato de su capacidad en `framework/marco` y lo operacionaliza sin exigir un orden fijo de ejecución. Una skill de fase declara readiness y la especificación de paquete aplicable; el orquestador padre compone las capacidades transversales o de tarea puntual ya resueltas.**
 
 Este documento es la **plantilla duradera** para diseñar toda skill operativa futura a partir de `framework/marco`. Define el modelo de capas, el contrato de transformación marco→skill, el cruce con el catálogo de capacidades, la estructura de skill, las reglas operacionales, la política de tests y el flujo de implementación y revisión. F0 no es una excepción: es el primer caso de una transformación sistemática de todo el marco en capacidades ejecutables.
 
@@ -106,12 +106,12 @@ El catálogo usa **seis tipos** de capacidad, no tres familias:
 | Fase | `f0_factibilidad`, `f2_requisitos_sistema` | Proyección principal de un contrato de fase. |
 | Transición | `handoff_presupuesto_a_proyecto` | Consolida hitos y vacíos entre estados del proyecto. |
 | Transversal | `riesgos_y_oportunidades`, `trazabilidad`, `decisiones_tecnicas` | Registros y prácticas reutilizados en varias fases. |
-| Tarea puntual | `redaccion_de_artefacto`, `preparacion_de_review` | Producir o revisar un artefacto concreto. |
+| Tarea puntual | `redaccion_de_artefacto`, `preparacion_de_review`, `docs_review` | Producir un artefacto, preparar un REVIEW formal del marco o gobernar el ciclo genérico de un paquete documental. |
 
 Reglas de mapeo:
 
 - **Una fase puede mapear a varias capacidades.** `F1` se divide en `f1_stakeholders_preliminar` (fase, madurez `preliminar`), `handoff_presupuesto_a_proyecto` (transición) y `f1_stakeholders_formal` (fase, madurez `formal`). El diseño decide por capacidad ejecutable, no por fase. En este caso el handoff se ejecuta después de la decisión humana de aprobación y consolida el pase desde presupuesto hacia `F1 formal`; no sustituye ninguno de los dos modos de fase.
-- **Una skill de fase compone, no duplica.** Indica qué transversales y tareas puntuales entran en su alcance y con qué alcance específico (p. ej., en F0 `riesgos` siempre, `requisitos` solo a nivel de necesidad preliminar); no reproduce la técnica completa de la capacidad transversal.
+- **Una skill de fase declara, no invoca ni duplica.** Indica al padre qué transversales y tareas puntuales aplican, con su alcance específico, readiness y cualquier especificación exacta requerida (p. ej., en F0 `riesgos` siempre; para un paquete documental, scope, madurez y artefactos). El padre selecciona, resuelve, carga y compone las capacidades aplicables; la fase nunca llama a otra skill ni reproduce su técnica.
 - **Cobertura pendiente:** `datos_y_documentacion` y `lecciones_aprendidas` no existen como fichas del catálogo y reciben tratamientos provisionales distintos. `datos_y_documentacion` puede manejarse provisionalmente solo como trazabilidad de evidencia (procedencia y cita de fuente) cuando la fase lo requiera, sin fingir que existe una capacidad dedicada. `lecciones_aprendidas` sigue siendo una decisión de cobertura pendiente: no se absorbe implícitamente y sus registros autoritativos específicos de fase solo se tocan cuando el marco o el catálogo lo exigen explícitamente.
 
 ## Plantilla de skill de fase
@@ -126,9 +126,9 @@ Estas son las **once secciones por defecto de toda skill de fase**. Las demás c
 | 4 | Capacidades operacionales | Las actividades guía operacionalizadas, seleccionables según estado, sin orden obligatorio. | Checklist fija, orden numerado obligatorio o duplicación del contenido del marco. |
 | 5 | Salidas esperadas | Resultados esperados y forma de entrega (actualizar artefacto autoritativo o borrador estructurado). | Entregables vagos sin destino ni evidencia declarada. |
 | 6 | Artefactos obligatorios | Los artefactos del marco y la política de ubicación (autoritativa o `ubicación pendiente`). | Inventar rutas canónicas; fabricar contenido para llenar vacíos. |
-| 7 | Review y baseline | Review asociada (nombre y momento típico), tratamiento de baseline y alcance exacto de la skill (solo readiness). | Convocar, conducir o aprobar la review; declarar baselines que el marco no asigna. |
+| 7 | Review y baseline | Review asociada (nombre y momento típico), tratamiento de baseline y alcance exacto de la skill (solo readiness). Cuando la fase aplica el [ciclo de review por paquete](design-document-review-lifecycle.md), la skill añade tras esta una sección dedicada `Revisión de documentos obligatorios` con el ciclo completo del paquete y su frontera de autoridad; es un control independiente del veredicto de esta review. | Convocar, conducir o aprobar la review; declarar baselines que el marco no asigna; copiar, promover, revisar o aprobar paquetes; tratar readiness para someter como autorización. |
 | 8 | Procesos y registros transversales | Cada transversal del alcance con su registro autoritativo y su límite de alcance en esta fase. | Tocar registros fuera del alcance; reproducir la técnica transversal completa. |
-| 9 | Criterios de cierre | Los criterios del marco, íntegros, como verificación de readiness. | Añadir o quitar criterios; tratar el cierre como autorización. |
+| 9 | Criterios de cierre | Los criterios del marco, íntegros, como verificación de readiness. Cuando la fase aplica el [ciclo de review por paquete](design-document-review-lifecycle.md), la existencia de un paquete aprobado promovido con gates satisfechos es una condición adicional del cierre. | Añadir o quitar criterios; tratar el cierre como autorización; sustituir los gates del paquete por la sola presencia de la carpeta aprobada. |
 | 10 | Cierre, recomendación y handoff | Los tres juicios separados (recomendación técnica, readiness, decisión humana) y los vacíos que bloquean el handoff. | Autoaprobar cierre, transición o presupuesto; mezclar recomendación con decisión. |
 | 11 | Referencias | Fuentes autoritativas de dominio y registros, en las rutas instaladas (`marco/…`, `proyecto/…`). | Referencias no instaladas o inventadas; silenciar faltantes. |
 
@@ -160,7 +160,7 @@ Toda skill operativa respeta estas reglas, sin repetir justificación en cada un
 | Rutas autoritativas | `framework/proyecto/**` define la plantilla común; en runtime, si el artefacto tiene ubicación autoritativa en la instancia `proyecto/`, se lee y se madura allí. |
 | `ubicación pendiente` | Si un artefacto obligatorio no tiene ubicación autoritativa en la instancia, se entrega como borrador estructurado marcado `ubicación pendiente`, sin inventar rutas. La existencia de una carpeta reservada en la plantilla no basta para inventar un archivo. |
 | No inventar | No se inventan estado, entregables, rutas, evidencia ni contenido para llenar un vacío; los faltantes se declaran. |
-| Single-writer | Solo el orquestador padre consolida actualizaciones en los documentos autoritativos de la instancia; las skills producen propuestas estructuradas con base y procedencia. |
+| Single-writer | Solo el orquestador padre consolida actualizaciones en los documentos autoritativos de la instancia; las skills producen propuestas estructuradas con base y procedencia. Las superficies de review humana (`docs-verificacion/**`) y de aprobación (`docs-aprobados/**`) quedan fuera de esta escritura: pertenecen a la [autoridad particionada de review](design-document-review-lifecycle.md#actores-y-autoridad) y las reserva el ingeniero humano, cuya ejecución mecánica puede delegar conversacionalmente en Codex bajo instrucción explícita (ningún agente elige `aprobado` ni `rechazado`). |
 | Consistencia de estado | Una transición que afecta estado global, estado de fase e hito se propone como un único cambio coherente; el padre valida sus precondiciones y evita estados parciales antes de persistirlo. |
 | Fail-closed | La evidencia no crítica faltante no bloquea: se producen borradores estructurados con los vacíos declarados de forma explícita. La ausencia de evidencia requerida sí bloquea el cierre de fase, las reviews y baselines formales y las transiciones; se solicita su restauración. La disponibilidad de skills no cambia esta regla. |
 
@@ -210,6 +210,23 @@ Las skills **pueden evaluar** readiness; **nunca se autoaprueban** reviews, base
 | Recomendación técnica | La skill, con base, confianza y condiciones. | `Go`, `No-Go` o `no concluyente` mientras la evidencia sea insuficiente. |
 | Readiness del dossier | La skill, como evaluación explícita de preparación y vacíos. | `borrador`, `listo para revisión` o `no recomendable avanzar`. |
 | Decisión y autorización humanas | Los humanos. | Continuidad, presupuesto, veredicto de la MCR, apertura de F1. |
+
+### Autoridad particionada sobre review y aprobación
+
+Cuando una fase aplique el [ciclo de vida de review por paquete](design-document-review-lifecycle.md), la superficie de escritura se **particiona** por superficie, sin debilitar el single-writer:
+
+| Superficie | Autoridad de escritura (ejecución mecánica delegable) |
+| --------------------------------------------------------- | ------------------------------------------------------------------ |
+| Documentos vivos y estado (`proyecto/fases/**`, `proyecto/estado/**`, `proyecto/hitos/**`, `proyecto/registros/**`) | El orquestador padre (como siempre). |
+| Superficie de verificación (`proyecto/docs-verificacion/**`) y de aprobados (`proyecto/docs-aprobados/**`) | El ingeniero humano: única autoridad del sometimiento, la decisión y la attestation. Arma el paquete, somete, revisa, decide y promueve **conversacionalmente**, delegando la ejecución mecánica (copiar, computar `content_sha256`, completar el manifest, promover) en Codex bajo instrucción explícita. |
+
+Una skill de fase que implemente esta integración evalúa readiness para someter y valida estructura y evidencia de paquetes existentes en solo lectura; **nunca** copia, promueve, revisa, aprueba, firma, elige `aprobado` ni `rechazado`, ni trata readiness como autorización. El padre persiste los espejos derivados (`doc_approval`, historial de aprobación) tras decisiones humanas ya registradas en el manifest autoritativo del paquete; jamás decide un estado de review por sí mismo. Esta partición es **autoridad particionada**, no una excepción al single-writer: cada superficie conserva exactamente un escritor autorizado, y la delegación de ejecución mecánica a Codex transfiere ejecución, nunca autoridad.
+
+La capacidad implementada de **tarea puntual** `docs_review` (skill `docs-review`) rige el ciclo genérico de paquetes documentales. Es reutilizable entre fases, pero su único tipo de catálogo es `tarea puntual`; su hoja completa, acciones mecánicas y fronteras están en [design-document-review-lifecycle.md](design-document-review-lifecycle.md). No se duplica aquí. Es estrictamente distinta de `preparacion_de_review`: esta última queda reservada para preparar los REVIEWS formales de ingeniería de sistemas (MCR, SRR, PDR, CDR, SIR/EMR, TRR, SAR y transfer review), sin alias ni repurpose.
+
+Una fase que aplica el ciclo declara readiness y entrega al padre la especificación exacta; el padre lógico, ejecutado por Codex, selecciona/resuelve/carga/compone `docs-review`. Codex ejecuta el contrato ya seleccionado, no decide el routing. El usuario no escribe comandos; toda mecánica requiere instrucción conversacional humana explícita. La aprobación de herramientas nunca equivale a aprobación de dominio.
+
+**Frontera veraz de implementación:** el núcleo genérico `docs-review` está implementado en runtime, con backend PowerShell, contrato JSON canónico del manifest, registry, catálogo conceptual, payload y pruebas estáticas. El gate estático Linux actual pasó 8/8; falta ejecutar `tests/powershell/docs_review.tests.ps1` en Windows PowerShell Desktop 5.1, y no hay CI Windows por decisión humana. Las skills ya implementadas (`f0-factibilidad`, `f1-stakeholders-preliminar`, `handoff-presupuesto-a-proyecto`) no adquieren este contrato automáticamente. La primera consumidora, `f1_stakeholders_formal` ([hoja de diseño](design-f1-stakeholders-handoff.md)), ya está implementada como skill de fase pura: se integra por emisión y no compone ni opera `docs-review`; la composición la ejecuta el padre ante instrucción humana explícita. No se añadieron plantillas en `framework/proyecto/docs-*`; el backend crea paquetes bajo `proyecto/docs-verificacion/**` y `proyecto/docs-aprobados/**` a demanda.
 
 ## Nombres, bindings y madurez de implementación
 
@@ -317,7 +334,8 @@ Checklist pre-commit:
 
 ## Relacionado
 
-- [`docs/architecture/design-f1-stakeholders-handoff.md`](design-f1-stakeholders-handoff.md) — diseño concreto de las capacidades de `F1`: `f1_stakeholders_preliminar` y `handoff_presupuesto_a_proyecto` (hojas de diseño completas).
+- [`docs/architecture/design-document-review-lifecycle.md`](design-document-review-lifecycle.md) — ciclo de vida de review humana por paquete versionado (`docs-verificacion` → `docs-aprobados`), autoridad particionada y gates de cierre; núcleo `docs-review` implementado con verificación conductual PS5.1 pendiente.
+- [`docs/architecture/design-f1-stakeholders-handoff.md`](design-f1-stakeholders-handoff.md) — diseño concreto de las tres capacidades de `F1`: `f1_stakeholders_preliminar`, `f1_stakeholders_formal` y `handoff_presupuesto_a_proyecto` (hojas de diseño completas).
 - [`framework/guias/skill-architecture.md`](../../framework/guias/skill-architecture.md) — catálogo canónico de capacidades, routing y bindings.
 - [`docs/decisions/skill-artifacts.md`](../decisions/skill-artifacts.md) — decisión canónica de las capas de autoridad y el registry operativo.
 - [`docs/decisions/agents-contract.md`](../decisions/agents-contract.md) — decisión canónica del contrato único de `AGENTS.md`.

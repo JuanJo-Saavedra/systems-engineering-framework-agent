@@ -1,7 +1,7 @@
 ---
 document_type: propuesta
 language: es
-version: 0.3
+version: 0.5
 status: propuesta
 ---
 # Frontera dominio-harness
@@ -82,10 +82,12 @@ Regla: la dependencia apunta **hacia abajo** (lo inferior puede depender de lo s
 | --------------------------------------------------- | ------------------------- |
 | Leer estado autoritativo                            | Exploración de contexto  |
 | Elegir ruta/capacidad                               | Redacción acotada        |
-| Actualizar documentos autoritativos (single-writer) | Análisis de solo lectura |
+| Actualizar documentos vivos y estado del proyecto (single-writer) | Análisis de solo lectura |
 | Decidir gates y transiciones                        | Preparar borrador         |
 
-**Single-writer**: un único escritor (el padre) actualiza los documentos autoritativos del proyecto. Los subagentes producen salidas; el padre consolida.
+**Single-writer**: el padre es el único escritor de los documentos vivos y el estado del proyecto: `proyecto/fases/**`, `proyecto/estado/**`, `proyecto/hitos/**` y `proyecto/registros/**`. Los subagentes producen salidas; el padre consolida.
+
+**Distinción de review:** los snapshots de paquetes en `proyecto/docs-verificacion/**` y `proyecto/docs-aprobados/**` son superficies de autoridad humana. El orquestador padre lógico, ejecutado dentro de Codex, dirige las operaciones mecánicas solo bajo instrucción conversacional humana explícita, sin transferir autoridad de aprobación. El backend implementado `runtime/skills/docs-review/scripts/docs_review.ps1` es un detalle de la skill de runtime `docs-review` (Windows PowerShell 5.1 + .NET), nunca lógica de dominio: el dominio no lo importa ni conoce, el padre lo ordena dentro del contrato ya compuesto y Codex lo ejecuta. El núcleo genérico cuenta con skill, contrato, catálogo, registry, payload y pruebas estáticas; el gate estático Linux pasó 8/8, pero falta ejecutar su suite nativa en Windows PowerShell Desktop 5.1 y no hay CI Windows por decisión humana. La integración de F1 está implementada como skill de fase pura (`runtime/skills/f1-stakeholders-formal`), integrada solo por emisión; la composición con `docs-review` la ejecuta el padre ante instrucción humana explícita; ver [design-document-review-lifecycle.md](design-document-review-lifecycle.md).
 
 ## Reglas anti-corrupción
 

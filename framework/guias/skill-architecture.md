@@ -130,7 +130,7 @@ Las etiquetas describen hasta dónde llega el enlace ejecutable de una capacidad
 | `mapeada` | Existe un enlace declarado a una skill o subagente, sin verificación de comportamiento completa. |
 | `verificada` | El enlace pasó pruebas de comportamiento (selección, degradación, fronteras). |
 
-Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar` y `handoff_presupuesto_a_proyecto` declaran enlaces (`mapeada`).
+Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar`, `handoff_presupuesto_a_proyecto` y `docs_review` declaran enlaces (`mapeada`).
 
 En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de forma global cuando el valor era uniforme para todo el catálogo. Desde v2.2 la regla es **valor por defecto global + anulación por ficha**: una ficha que declara sus propios campos `estado_implementacion` y `bindings` anula el valor por defecto solo para esa capacidad; el resto del catálogo permanece bajo el valor global.
 
@@ -460,6 +460,27 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - paquete de review,
   - entry criteria evaluado,
   - lista de faltantes y observaciones.
+
+#### `docs_review`
+
+- **Tipo**: tarea puntual
+- **Cuándo usarla**: ante instrucción humana explícita para preparar, someter, registrar una decisión, promover o validar un paquete documental versionado, después de que el padre haya resuelto la especificación exacta del paquete.
+- **Fuentes autoritativas**:
+  - especificación exacta del paquete resuelta por el padre,
+  - `manifest.md` y snapshots del paquete cuando ya existen,
+  - contrato v1 instalado en `.agents/skills/docs-review/references/manifest-contract.md`.
+- **Salidas esperadas**:
+  - paquete pendiente o sometido,
+  - decisión humana registrada sin inferirla,
+  - copia aprobada byte a byte idéntica o informe de validación determinista,
+  - estado, hashes y bloqueo explícito.
+- **Guardrails de cierre**:
+  - es la capacidad genérica del ciclo de paquete; no es alias ni reemplazo de `preparacion_de_review`, que conserva la preparación de los REVIEWS formales del marco;
+  - el humano autoriza sometimiento y promoción, dicta attestations, decisión y hallazgos; el ejecutable nunca los elige ni modifica documentos vivos;
+  - el único backend es `runtime/skills/docs-review/scripts/docs_review.ps1`, interno, para Windows PowerShell 5.1 + .NET, mediante `-Operation` y `-RequestPath`; el usuario nunca escribe comandos;
+  - la skill, la referencia versionada y el backend están presentes; hay cobertura estática disponible en Linux, pero la verificación conductual en Windows PowerShell 5.1 sigue pendiente. La capacidad falla cerrada si el backend falta o devuelve bloqueo y no admite sustituto manual ni otro runtime.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`): skill, referencia y backend presentes, con cobertura estática Linux disponible; no hay verificación conductual en Windows PowerShell 5.1.
+- **Bindings**: `docs_review` → skill `docs-review` (`runtime/skills/docs-review/SKILL.md`; instalada como `.agents/skills/docs-review/SKILL.md`); referencia instalada `references/manifest-contract.md`; backend instalado `scripts/docs_review.ps1`.
 
 ## Mantenimiento
 
