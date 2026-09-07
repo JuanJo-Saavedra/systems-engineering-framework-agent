@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "disabled": true
+    }
+  }
+}
