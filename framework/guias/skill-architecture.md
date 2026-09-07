@@ -130,7 +130,7 @@ Las etiquetas describen hasta dónde llega el enlace ejecutable de una capacidad
 | `mapeada` | Existe un enlace declarado a una skill o subagente, sin verificación de comportamiento completa. |
 | `verificada` | El enlace pasó pruebas de comportamiento (selección, degradación, fronteras). |
 
-Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar`, `handoff_presupuesto_a_proyecto` y `docs_review` declaran enlaces (`mapeada`).
+Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar`, `handoff_presupuesto_a_proyecto`, `f1_stakeholders_formal` y `docs_review` declaran enlaces (`mapeada`).
 
 En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de forma global cuando el valor era uniforme para todo el catálogo. Desde v2.2 la regla es **valor por defecto global + anulación por ficha**: una ficha que declara sus propios campos `estado_implementacion` y `bindings` anula el valor por defecto solo para esa capacidad; el resto del catálogo permanece bajo el valor global.
 
@@ -249,6 +249,8 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - stakeholder requirements formalizados,
   - contradicciones resueltas,
   - base apta para abrir `F2`.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `f1_stakeholders_formal` → skill `f1-stakeholders-formal` (`runtime/skills/f1-stakeholders-formal/SKILL.md`; instalada como `.agents/skills/f1-stakeholders-formal/SKILL.md`).
 
 #### `f2_requisitos_sistema`
 

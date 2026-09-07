@@ -306,7 +306,7 @@ En este estado:
 | `F0` → `F1 preliminar` | Necesidad entendible y recomendación de continuidad para cotizar. |
 | `F1 preliminar` → `trabajo aprobado` | Solo mediante el hito formal de aprobación. |
 | `Trabajo aprobado` → `F1 formal` | Reutilizando insumos del presupuesto, nunca reiniciando. |
-| `F1 formal` → `F2` | Gate obligatorio: no abrir `F2` si `F1 formal` quedó incompleta. Se requiere stakeholders críticos identificados, restricciones externas consolidadas, escenarios de uso relevantes y criterios de aceptación de alto nivel suficientemente claros. |
+| `F1 formal` → `F2` | Gate obligatorio: no abrir `F2` si `F1 formal` quedó incompleta. Se requiere stakeholders críticos identificados, restricciones externas consolidadas, escenarios de uso relevantes y criterios de aceptación de alto nivel suficientemente claros, y el paquete completo scope `f1-stakeholders` `aprobado`, promovido bajo `proyecto/docs-aprobados/` y validado con hashes/gates coherentes. `pendiente`, `en_verificacion`, `rechazado`, divergencia o aprobación parcial bloquean. No autoejecutar la transición ni encadenar operaciones sin autorización humana explícita. |
 
 ## Registros transversales obligatorios
 
