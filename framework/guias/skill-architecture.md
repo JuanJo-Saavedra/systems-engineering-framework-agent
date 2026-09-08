@@ -130,7 +130,7 @@ Las etiquetas describen hasta dónde llega el enlace ejecutable de una capacidad
 | `mapeada` | Existe un enlace declarado a una skill o subagente, sin verificación de comportamiento completa. |
 | `verificada` | El enlace pasó pruebas de comportamiento (selección, degradación, fronteras). |
 
-Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar`, `handoff_presupuesto_a_proyecto`, `f1_stakeholders_formal` y `docs_review` declaran enlaces (`mapeada`).
+Estado por defecto: **todas las capacidades están en `definida` salvo anulación explícita en su ficha**. Este catálogo no declara ningún enlace ejecutable verificado; hoy `f0_factibilidad`, `f1_stakeholders_preliminar`, `handoff_presupuesto_a_proyecto`, `f1_stakeholders_formal`, `docs_review`, `f2_requisitos_sistema` y `preparacion_de_review` declaran enlaces (`mapeada`).
 
 En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de forma global cuando el valor era uniforme para todo el catálogo. Desde v2.2 la regla es **valor por defecto global + anulación por ficha**: una ficha que declara sus propios campos `estado_implementacion` y `bindings` anula el valor por defecto solo para esa capacidad; el resto del catálogo permanece bajo el valor global.
 
@@ -267,6 +267,8 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - SyRS,
   - trazabilidad necesidad ↔ requisito,
   - método de verificación por requisito.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `f2_requisitos_sistema` → skill `f2-requisitos-sistema` (`runtime/skills/f2-requisitos-sistema/SKILL.md`; instalada como `.agents/skills/f2-requisitos-sistema/SKILL.md`).
 
 #### `f3_arquitectura`
 
@@ -462,6 +464,8 @@ En v2.0, `estado_implementacion` y `bindings` se declaraban una sola vez de form
   - paquete de review,
   - entry criteria evaluado,
   - lista de faltantes y observaciones.
+- **Estado de implementación**: `mapeada` (anula el valor por defecto global de `definida`).
+- **Bindings**: `preparacion_de_review` → skill `preparacion-de-review` (`runtime/skills/preparacion-de-review/SKILL.md`; instalada como `.agents/skills/preparacion-de-review/SKILL.md`).
 
 #### `docs_review`
 
