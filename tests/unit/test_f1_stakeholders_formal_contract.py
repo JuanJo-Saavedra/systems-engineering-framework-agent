@@ -1,7 +1,9 @@
 """Contract for the pure phase skill ``f1-stakeholders-formal``.
 
 Static/packaging test in the spirit of ``test_docs_review_contract.py``: the
-skill has no scripts, so this pins its identity, the 12-section phase template,
+skill has no scripts, so this pins its identity, the 13-section phase template
+(with ``## Cambio atómico de apertura`` as a main section placed after
+``## Artefactos obligatorios`` and before ``## Review y baseline``),
 the three recognized states with fail-closed handling, the atomic first-opening
 proposal, allowed vs read-only scopes, the review integration by emission only
 (exact ``f1-stakeholders-formal-r<NNN>`` package specification), the
@@ -47,6 +49,7 @@ PHASE_SECTIONS = (
     "Capacidades operacionales",
     "Salidas esperadas",
     "Artefactos obligatorios",
+    "Cambio atómico de apertura",
     "Review y baseline",
     "Revisión de documentos obligatorios",
     "Procesos y registros transversales",
@@ -92,9 +95,39 @@ def test_skill_declares_the_exact_phase_identity_and_trigger() -> None:
         assert trigger in description.group("text"), f"description must name trigger state {trigger!r}"
 
 
-def test_skill_follows_the_twelve_section_phase_template() -> None:
+def test_skill_follows_the_thirteen_section_phase_template() -> None:
     headings = re.findall(r"^##\s+(.+?)\s*$", _skill_text(), re.MULTILINE)
-    assert headings == list(PHASE_SECTIONS), f"expected the 12-section phase template, got: {headings}"
+    assert headings == list(PHASE_SECTIONS), f"expected the 13-section phase template, got: {headings}"
+
+ATOMIC_OPENING_HEADING = "Cambio atómico de apertura"
+
+def test_atomic_first_opening_is_a_dedicated_main_section() -> None:
+    """The mandatory first-work behavior is a main ``##`` section placed exactly
+    after ``## Artefactos obligatorios`` and before ``## Review y baseline``."""
+    text = _skill_text()
+    match = re.search(rf"^##\s+{re.escape(ATOMIC_OPENING_HEADING)}\s*$", text, re.MULTILINE)
+    assert match, "the atomic first-opening change must be a dedicated ## main section"
+    assert f"**{ATOMIC_OPENING_HEADING}**" not in text, "the bold inline label must be replaced by the heading"
+    headings = [
+            (m.group(0), m.start()) for m in re.finditer(r"^##\s+.+$", text, re.MULTILINE)
+    ]
+    position = headings.index((f"## {ATOMIC_OPENING_HEADING}", match.start()))
+    assert headings[position - 1][0].startswith("## Artefactos obligatorios"), (
+        "the atomic opening section must come immediately after Artefactos obligatorios"
+    )
+    assert headings[position + 1][0].startswith("## Review y baseline"), (
+        "the atomic opening section must come immediately before Review y baseline"
+    )
+    next_heading = re.search(r"^#{2,3}\s+", text[match.end():], re.MULTILINE)
+    section = text[match.end(): match.end() + next_heading.start()] if next_heading else text[match.end():]
+    for marker in (
+            "aprobado_en_transicion → proyecto_formal",
+            "F1 formal: no_iniciada → en_progreso",
+            "único bloque coherente",
+            "sin estados parciales",
+            "fail-closed",
+    ):
+        assert marker in section, f"the atomic opening section must keep {marker!r}"
 
 
 def test_skill_recognizes_exactly_three_states_and_fails_closed() -> None:
@@ -241,6 +274,70 @@ def test_registry_and_payload_mirrors_are_byte_coherent() -> None:
     assert PAYLOAD_REGISTRY.read_bytes() == REGISTRY.read_bytes(), "payload registry mirror must be byte-identical"
 
 
+def test_registry_trigger_covers_first_work_request_and_continuation() -> None:
+    """The f1-stakeholders-formal registry trigger must require the explicit human
+    request for the first work (with the consolidated handoff) and preserve
+    selection for normal continuation (proyecto_formal / en_progreso)."""
+    registry_text = REGISTRY.read_text(encoding="utf-8")
+    row = re.search(r"^\| `f1-stakeholders-formal` \|(?P<trigger>.*?)\| fase \|", registry_text, re.MULTILINE)
+    assert row is not None, "registry row for f1-stakeholders-formal missing"
+    trigger = row.group("trigger")
+    assert "pedido humano explícito" in trigger, "first work must require the explicit human request"
+    assert "aprobado_en_transicion" in trigger, "the first-work state must stay in the trigger"
+    assert re.search(r"proyecto_formal|en_progreso", trigger), "continuation selection must be preserved"
+
+
+def _bullet_slice(text: str, start_marker: str, end_marker: str) -> str:
+    """Return the text slice of one state bullet (no structural assumptions)."""
+    start = text.index(start_marker)
+    end = text.index(end_marker, start)
+    return text[start:end]
+
+
+def test_first_work_bullet_names_the_explicit_human_request() -> None:
+    """The Rol ``Primer trabajo formal`` bullet must name the explicit human request,
+    separate from the approval already consumed by the handoff, aligned with the
+    atomic opening section (no irrelevant prose is pinned)."""
+    text = _skill_text()
+    bullet = _bullet_slice(text, "1. **Primer trabajo formal**", "2. **Continuación normal**")
+    assert "pedido humano explícito" in bullet, (
+        "the first-work bullet must name the explicit human request, aligned with its opening section"
+    )
+    assert "separado de la aprobación" in bullet, (
+        "the request must be declared separate from the approval consumed by the handoff"
+    )
+
+
+def test_formal_design_hoja_names_the_explicit_human_request_in_first_work() -> None:
+    """Design-sync gate: the concrete F1 formal hoja must state that the first
+    work/formal opening requires an explicit human request, separate from the
+    approval already consumed by the handoff."""
+    hoja = _formal_design_section()
+    bullet = _bullet_slice(hoja, "**Primer trabajo formal**", "**Continuación normal**")
+    assert "pedido humano explícito" in bullet, (
+        "the hoja first-work trigger must name the explicit human request"
+    )
+    assert "separado de la aprobación" in bullet, (
+        "the request must be explicit as separate from the approval consumed by the handoff"
+    )
+
+
+def test_formal_design_hoja_propagates_the_request_to_every_first_work_summary() -> None:
+    """The three first-work summaries of the formal hoja (schema row 7, the atomic
+    opening update item and the three-states acceptance criterion) must each name
+    the explicit human request, separate from the consumed approval — scoped
+    slices, no full-prose pinning."""
+    hoja = _formal_design_section()
+    schema_row = _schema_row(hoja, 7, "Cambio atómico de apertura")
+    update_item = _bullet_slice(hoja, "**Cambio atómico de apertura** (primer trabajo formal", "**Trabajo en curso**")
+    criterion = _bullet_slice(
+        hoja, "La skill distingue exactamente los tres estados reconocidos", "- [ ] Ante cualquier combinación"
+    )
+    for name, region in (("schema row 7", schema_row), ("update item 1", update_item), ("acceptance criterion", criterion)):
+        assert "pedido humano explícito" in region, f"{name} must name the explicit human request"
+        assert "separado de la aprobación" in region, f"{name} must keep the request separate from the consumed approval"
+
+
 def _ficha_section(text: str, capability: str) -> str:
     """Return the body of the ``#### ``capability```` ficha up to the next ficha heading."""
     match = re.search(rf"^####\s+`{re.escape(capability)}`\s*$", text, re.MULTILINE)
@@ -306,23 +403,35 @@ def _schema_row(section: str, number: int, section_name: str) -> str:
     return row.group("body")
 
 
-def test_design_docs_sync_the_twelve_section_schema_with_document_review_separation() -> None:
+def test_design_docs_sync_the_thirteen_section_schema_with_document_review_separation() -> None:
     """Design-sync gate: the concrete F1 formal design must mirror the implemented
-    12-section template — ``Review y baseline`` limited to the technical review,
-    readiness and the no-baseline boundary, with the whole package lifecycle and
-    authority boundary under the distinct ``Revisión de documentos obligatorios``
-    section — and the generic marco template must not fold the package cycle into
+    13-section template — the dedicated ``Cambio atómico de apertura`` main
+    section between ``Artefactos obligatorios`` and ``Review y baseline``,
+    ``Review y baseline`` limited to the technical review, readiness and the
+    no-baseline boundary, with the whole package lifecycle and authority
+    boundary under the distinct ``Revisión de documentos obligatorios`` section —
+    and the generic marco template must not fold the package cycle into
     ``Review y baseline``. Scoped to the formal hoja, so the preliminary skill
-    (not adapted to the package cycle) keeps its own 11-section schema."""
+    keeps its own 12-section schema with the same dedicated main section."""
     formal = _formal_design_section()
     assert "plantilla de fase, once secciones" not in formal, (
         "formal skill schema still uses the stale 11-section framing"
     )
-    assert "plantilla de fase, doce secciones" in formal, (
-        "formal skill schema must declare the 12-section template"
+    assert "plantilla de fase, doce secciones" not in formal, (
+        "formal skill schema still uses the stale 12-section framing"
     )
-    baseline_row = _schema_row(formal, 7, "Review y baseline")
-    doc_review_row = _schema_row(formal, 8, "Revisión de documentos obligatorios")
+    assert "plantilla de fase, trece secciones" in formal, (
+        "formal skill schema must declare the 13-section template"
+    )
+    baseline_row = _schema_row(formal, 8, "Review y baseline")
+    doc_review_row = _schema_row(formal, 9, "Revisión de documentos obligatorios")
+    opening_row = _schema_row(formal, 7, "Cambio atómico de apertura")
+    for marker in (
+        "aprobado_en_transicion → proyecto_formal",
+        "F1 formal: no_iniciada → en_progreso",
+        "único bloque coherente",
+    ):
+        assert marker in opening_row, f"Cambio atómico de apertura row must keep {marker!r}"
     for limited in ("Stakeholder Requirements Review", "readiness", "no aplica baseline formal de sistema"):
         assert limited in baseline_row, f"Review y baseline row must stay limited to {limited!r}"
     for stale in ("en_verificacion", "docs-review", "docs-verificacion", "docs-aprobados", "r<NNN"):
@@ -340,7 +449,14 @@ def test_design_docs_sync_the_twelve_section_schema_with_document_review_separat
         )
 
     marco = MARCO_DOC.read_text(encoding="utf-8")
-    marco_baseline_row = _schema_row(marco, 7, "Review y baseline")
+    marco_baseline_row = _schema_row(marco, 8, "Review y baseline")
+    marco_opening_row = _schema_row(marco, 7, "Cambio atómico de apertura")
+    assert re.search(
+        r"despu[eé]s de `## Artefactos obligatorios` y antes de `## Review y baseline`", marco
+    ), "marco template must place the atomic opening after Artefactos obligatorios and before Review y baseline"
+    assert "Dispersar la apertura entre secciones" in marco_opening_row, (
+        "marco opening row must forbid dispersing the opening across sections"
+    )
     assert "Revisión de documentos obligatorios" in marco_baseline_row, (
         "marco template must point the package cycle to the dedicated document-review section"
     )

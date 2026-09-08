@@ -18,7 +18,7 @@ Pregunta central: `¿Qué necesitan los stakeholders?`. En modo formal, cerrar l
 - Trabajas en madurez `formal` únicamente.
 - Presupones el handoff del proyecto ya consolidado y lo consumes como precondición, no como tarea: `project_start_authorized: true`, `approval_handoff_status: consolidado`, fase `F1 preliminar` ya `cerrada` y el hito `proyecto/hitos/hito_aprobacion_trabajo.md` completo con sus secciones de insumos heredados y vacíos antes de fase `F2`.
 - Reconoces exactamente tres estados y tratas cada uno según corresponde:
-  1. **Primer trabajo formal** — `project_status: aprobado_en_transicion`, fila `F1 formal: no_iniciada`, handoff ya consolidado: ejecutas el arranque y propones el cambio atómico de apertura (ver `## Artefactos obligatorios`).
+  1. **Primer trabajo formal** — `project_status: aprobado_en_transicion`, fila `F1 formal: no_iniciada`, handoff ya consolidado y **pedido humano explícito** de apertura (separado de la aprobación ya consumida por el handoff): ejecutas el arranque y propones el cambio atómico de apertura (ver `## Cambio atómico de apertura`).
   2. **Continuación normal** — `project_status: proyecto_formal`, fila `F1 formal: en_progreso`: ejecutas trabajo formal sobre los artefactos y registros ya abiertos y propones actualizaciones de contenido.
   3. **Trabajo formal ya cerrado coherentemente** — fila `F1 formal: cerrada`, artefactos en `formal`/`aprobado` y estado global `proyecto_formal`: respondes de forma idempotente; informas el estado observado, no propones cambios y no reabres nada.
 - Fail-closed: ante cualquier combinación parcial o inconsistente (p. ej. `proyecto_formal` con fila `F1 formal: no_iniciada`, `aprobado_en_transicion` con fila `en_progreso`, artefactos cuya madurez y aprobación se contradicen entre sí, `project_start_authorized` distinto de `true` o `F1 preliminar` no `cerrada`), informas el conflicto observado y bloqueas sin inferir reparaciones. Nunca re-ejecutas el handoff, no reabres el hito y no rehaces trabajo preliminar.
@@ -99,7 +99,25 @@ Ciclo `doc_approval` en esta skill:
 2. **Trabajo formal en curso**: el artefacto trabaja con `doc_approval: pendiente`.
 3. **Cierre formal**: el usuario aprueba y el `doc_approval` vuelve a `aprobado` como espejo derivado de la decisión ya registrada en el manifest del paquete; el orquestador persiste el espejo con sus entradas de historial coherentes con la attestation del manifest.
 
-**Cambio atómico de apertura** (primer trabajo formal): propones un único bloque coherente que el orquestador persiste como un solo cambio, sin estados parciales:
+**Expectativas de madurez `formal`** al cierre de cada artefacto (sin fabricar contenido para llenar vacíos):
+
+| Artefacto | Expectativa al cierre formal | Lo que no se exige aquí |
+| --- | --- | --- |
+| `requisitos_stakeholders.md` | Vacíos heredados cerrados, contradicciones entre stakeholders resueltas, criterios de aceptación de alto nivel claros | Sin system requirements ni métodos de verificación (`F2`) |
+| `escenarios_operativos.md` | Escenarios de uso relevantes completos y consistentes con las necesidades formalizadas; vacíos heredados cerrados | No se diseñan soluciones ni se asignan funciones al sistema: eso corresponde a `F2` |
+| `restricciones_externas.md` | Restricciones externas consolidadas y confirmadas con fuente; restricciones por confirmar del presupuesto cerradas | No se traducen restricciones en requisitos de sistema ni en decisiones de diseño: eso corresponde a `F2` |
+| `matriz_necesidad_requisito_stakeholder.md` | Cobertura bidireccional completa y sin huérfanos entre necesidades y stakeholder requirements; contradicciones de trazabilidad resueltas | No se extiende la matriz hacia system requirements ni métodos de verificación: esa trazabilidad nace en `F2` |
+
+## Cambio atómico de apertura
+
+La apertura formal nunca la decide esta skill: el orquestador la enruta después de que el humano aprobó el trabajo y el handoff quedó consolidado. Tras ese pedido humano explícito de apertura, en su primer trabajo formal verificas fail-closed:
+
+- `project_start_authorized: true` y `approval_handoff_status: consolidado`,
+- la fila `F1 preliminar: cerrada` con su aprobación humana,
+- el estado global `aprobado_en_transicion` con la fila `F1 formal: no_iniciada`,
+- fuentes de estado mutuamente consistentes.
+
+Verificado todo, propones un único bloque coherente que el orquestador persiste como un solo cambio, sin estados parciales:
 
 | Fuente | Cambio propuesto (anterior → propuesto) | Precondición / evidencia del usuario |
 | --- | --- | --- |
@@ -109,14 +127,7 @@ Ciclo `doc_approval` en esta skill:
 
 El estado global pasa a `proyecto_formal` en el mismo cambio atómico en que la fila `F1 formal` pasa a `en_progreso`: no existen estados intermedios donde el estado global ya sea `proyecto_formal` y la fila siga `no_iniciada`, ni viceversa. La fila `F2` permanece `no_iniciada`.
 
-**Expectativas de madurez `formal`** al cierre de cada artefacto (sin fabricar contenido para llenar vacíos):
-
-| Artefacto | Expectativa al cierre formal | Lo que no se exige aquí |
-| --- | --- | --- |
-| `requisitos_stakeholders.md` | Vacíos heredados cerrados, contradicciones entre stakeholders resueltas, criterios de aceptación de alto nivel claros | Sin system requirements ni métodos de verificación (`F2`) |
-| `escenarios_operativos.md` | Escenarios de uso relevantes completos y consistentes con las necesidades formalizadas; vacíos heredados cerrados | No se diseñan soluciones ni se asignan funciones al sistema: eso corresponde a `F2` |
-| `restricciones_externas.md` | Restricciones externas consolidadas y confirmadas con fuente; restricciones por confirmar del presupuesto cerradas | No se traducen restricciones en requisitos de sistema ni en decisiones de diseño: eso corresponde a `F2` |
-| `matriz_necesidad_requisito_stakeholder.md` | Cobertura bidireccional completa y sin huérfanos entre necesidades y stakeholder requirements; contradicciones de trazabilidad resueltas | No se extiende la matriz hacia system requirements ni métodos de verificación: esa trazabilidad nace en `F2` |
+Ante cualquier combinación parcial o inconsistente (p. ej. `proyecto_formal` con fila `F1 formal: no_iniciada`, `aprobado_en_transicion` con fila `en_progreso`, o artefactos cuya madurez y aprobación se contradicen entre sí), informas el conflicto observado y bloqueas sin inferir reparaciones: no re-ejecutas el handoff, no reabres el hito y no propones la apertura.
 
 ## Review y baseline
 

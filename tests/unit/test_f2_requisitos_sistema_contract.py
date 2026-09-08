@@ -1,20 +1,20 @@
 """Contract for the pure phase skill ``f2-requisitos-sistema``.
 
 Static/packaging test in the spirit of ``test_f1_stakeholders_formal_contract.py``:
-the skill has no scripts, so this pins its identity, the exact 12-section phase
-template, the three recognized states with fail-closed handling, the absence of a
-preliminary mode, the atomic first-opening proposal, the two separate traceability
-matrices with immutable ``SYS-REQ-0001`` ids, the vv-summary schema with maturity
-separated from execution, allowed vs forbidden record mutations, review
-integration by emission only (exact ``f2-requisitos-sistema-formal-r<NNN>``
-package specification), the mandatory frozen review sequence as a concise six-stage
-table (dossier →
+the skill has no scripts, so this pins its identity, the exact 13-section phase
+template (with ``## Cambio atómico de apertura`` as a main section placed after
+``## Artefactos obligatorios`` and before ``## Review y baseline``), the three
+recognized states with fail-closed handling, the absence of a preliminary mode,
+the atomic first-opening proposal, the two separate traceability matrices with
+immutable ``SYS-REQ-0001`` ids, the vv-summary schema with maturity separated from
+execution, allowed vs forbidden record mutations, review integration by emission
+only (exact ``f2-requisitos-sistema-formal-r<NNN>`` package specification), the
+mandatory frozen review sequence as a concise six-stage table (dossier →
 ``Prepare``+``Submit`` → ``en_verificacion`` → SRR against the frozen review →
-verdict → separated post-verdict documental decision), the dedicated
-``### Cambio atómico de apertura`` subsection without a 13th top-level section,
-the absence of the duplicate closure-expectations block, and the conjunction-gated
-closure with the atomic Functional Baseline registration, and the
-registry/payload/catalog coherence.
+verdict → separated post-verdict documental decision), the absence of the
+duplicate closure-expectations block, and the conjunction-gated closure with the
+atomic Functional Baseline registration, and the registry/payload/catalog
+coherence.
 """
 
 from __future__ import annotations
@@ -53,6 +53,7 @@ PHASE_SECTIONS = (
     "Capacidades operacionales",
     "Salidas esperadas",
     "Artefactos obligatorios",
+    "Cambio atómico de apertura",
     "Review y baseline",
     "Revisión de documentos obligatorios",
     "Procesos y registros transversales",
@@ -114,9 +115,9 @@ def test_skill_declares_the_exact_phase_identity_and_trigger() -> None:
         assert trigger in description.group("text"), f"description must name trigger {trigger!r}"
 
 
-def test_skill_follows_the_twelve_section_phase_template() -> None:
+def test_skill_follows_the_thirteen_section_phase_template() -> None:
     headings = re.findall(r"^##\s+(.+?)\s*$", _skill_text(), re.MULTILINE)
-    assert headings == list(PHASE_SECTIONS), f"expected the 12-section phase template, got: {headings}"
+    assert headings == list(PHASE_SECTIONS), f"expected the 13-section phase template, got: {headings}"
 
 
 def test_skill_recognizes_exactly_three_states_and_fails_closed() -> None:
@@ -258,19 +259,25 @@ def _frozen_sequence_region(text: str) -> str:
     return text[start:end]
 
 
-def test_atomic_first_opening_is_a_dedicated_subsection() -> None:
-    """The mandatory first-work behavior gets a visible ``###`` subsection while
-    the exact 12 top-level ``##`` phase template is preserved."""
+def test_atomic_first_opening_is_a_dedicated_main_section() -> None:
+    """The mandatory first-work behavior is a main ``##`` section placed exactly
+    after ``## Artefactos obligatorios`` and before ``## Review y baseline``."""
     text = _skill_text()
-    match = re.search(rf"^###\s+{re.escape(ATOMIC_OPENING_HEADING)}\s*$", text, re.MULTILINE)
-    assert match, "the atomic first-opening change must be a dedicated ### subsection"
+    match = re.search(rf"^##\s+{re.escape(ATOMIC_OPENING_HEADING)}\s*$", text, re.MULTILINE)
+    assert match, "the atomic first-opening change must be a dedicated ## main section"
     assert f"**{ATOMIC_OPENING_HEADING}**" not in text, "the bold inline label must be replaced by the heading"
-    prior_sections = [m for m in re.finditer(r"^##\s+.+$", text, re.MULTILINE) if m.start() < match.start()]
-    assert prior_sections and prior_sections[-1].group(0).startswith("## Artefactos obligatorios"), (
-        "the ### subsection must live inside the existing artifacts section, not a 13th top-level section"
+    headings = [
+        (m.group(0), m.start()) for m in re.finditer(r"^##\s+.+$", text, re.MULTILINE)
+    ]
+    position = headings.index((f"## {ATOMIC_OPENING_HEADING}", match.start()))
+    assert headings[position - 1][0].startswith("## Artefactos obligatorios"), (
+        "the atomic opening section must come immediately after Artefactos obligatorios"
+    )
+    assert headings[position + 1][0].startswith("## Review y baseline"), (
+        "the atomic opening section must come immediately before Review y baseline"
     )
     next_heading = re.search(r"^#{2,3}\s+", text[match.end():], re.MULTILINE)
-    subsection = text[match.end(): match.end() + next_heading.start()] if next_heading else text[match.end():]
+    section = text[match.end(): match.end() + next_heading.start()] if next_heading else text[match.end():]
     for marker in (
         "F2: no_iniciada → en_progreso",
         "active_phase: F1 → F2",
@@ -278,7 +285,46 @@ def test_atomic_first_opening_is_a_dedicated_subsection() -> None:
         "sin estados parciales",
         "fail-closed",
     ):
-        assert marker in subsection, f"the atomic opening subsection must keep {marker!r}"
+        assert marker in section, f"the atomic opening section must keep {marker!r}"
+
+def test_first_work_bullet_names_the_explicit_human_request() -> None:
+    """The Rol ``Primer trabajo`` bullet must name the explicit human request,
+    aligned with the atomic opening section (no irrelevant prose is pinned)."""
+    text = _skill_text()
+    start = text.index("1. **Primer trabajo**")
+    end = text.index("2. **Continuación normal**", start)
+    bullet = text[start:end]
+    assert "pedido humano explícito" in bullet, (
+    "the first-work bullet must name the explicit human request, aligned with its opening section"
+    )
+
+def test_atomic_opening_requires_explicit_human_request_without_changing_the_gate() -> None:
+    """The first work/opening only happens after the explicit human request: the
+    skill verifies fail-closed and proposes, it never decides to open. The gate
+    and the exact transitions stay unchanged."""
+    text = _skill_text()
+    match = re.search(rf"^##\s+{re.escape(ATOMIC_OPENING_HEADING)}\s*$", text, re.MULTILINE)
+    assert match, "atomic opening section missing"
+    next_heading = re.search(r"^##\s+", text[match.end():], re.MULTILINE)
+    section = text[match.end(): match.end() + next_heading.start()] if next_heading else text[match.end():]
+    assert "pedido humano explícito" in section, "the opening must be routed after the explicit human request"
+    assert re.search(r"nunca la decides|no abre por decisi[oó]n propia", section), (
+        "the skill must never decide to open the phase by itself"
+    )
+    assert "Gate de paso a `F2`" in section, "the existing gate precondition must stay unchanged"
+    for transition in ("F2: no_iniciada → en_progreso", "active_phase: F1 → F2"):
+        assert transition in section, f"the existing transition must stay unchanged: {transition!r}"
+
+def test_registry_trigger_covers_first_work_request_and_continuation() -> None:
+    """The f2 registry trigger must require the explicit human request for the
+    first work (with the gate) and preserve selection for normal continuation."""
+    registry_text = REGISTRY.read_text(encoding="utf-8")
+    row = re.search(r"^\| `f2-requisitos-sistema` \|(?P<trigger>.*?)\| fase \|", registry_text, re.MULTILINE)
+    assert row is not None, "registry row for f2-requisitos-sistema missing"
+    trigger = row.group("trigger")
+    assert "pedido humano explícito" in trigger, "first work must require the explicit human request"
+    assert "gate de paso a F2" in trigger, "the gate must stay in the trigger"
+    assert re.search(r"fase F2 activa|en_progreso", trigger), "continuation selection must be preserved"
 
 
 def test_duplicate_closure_expectations_block_is_removed() -> None:
@@ -385,6 +431,59 @@ def test_registry_and_payload_mirrors_are_byte_coherent() -> None:
     )
     assert PAYLOAD_SKILL.read_bytes() == SKILL.read_bytes(), "payload skill mirror must be byte-identical"
     assert PAYLOAD_REGISTRY.read_bytes() == REGISTRY.read_bytes(), "payload registry mirror must be byte-identical"
+
+
+DESIGN_F2_DOC = REPO_ROOT / "docs" / "architecture" / "design-f2-system-requirements.md"
+
+
+def _design_f2_schema() -> str:
+    """Return the concrete F2 design schema section, up to the acceptance criteria."""
+    text = DESIGN_F2_DOC.read_text(encoding="utf-8")
+    start = text.find("### Esquema de secciones del futuro `SKILL.md`")
+    assert start != -1, "F2 design schema section missing"
+    end = text.find("### Criterios de aceptación", start)
+    return text[start:end if end != -1 else len(text)]
+
+
+def _design_row(section: str, number: int, name: str) -> str:
+    """Return the content cell of a schema table row (``| <n> | <name> | ... |``)."""
+    row = re.search(
+        rf"^\|\s*{number}\s*\|\s*{re.escape(name)}\s*\|(?P<body>.*?)\|\s*$",
+        section,
+        re.MULTILINE,
+    )
+    assert row is not None, f"schema row {number} ({name!r}) missing in the F2 design schema"
+    return row.group("body")
+
+
+def test_design_doc_pins_thirteen_section_schema_with_main_atomic_opening() -> None:
+    """Design-sync gate: the concrete F2 design must declare thirteen total
+    sections (with the optional document-review section) and represent
+    ``## Cambio atómico de apertura`` as a main section in the canonical
+    position: after ``Artefactos obligatorios``, before ``Review y baseline``.
+    F2 semantics are unchanged; this only pins the section structure."""
+    text = DESIGN_F2_DOC.read_text(encoding="utf-8")
+    assert "plantilla de fase, doce secciones" not in text, "stale 12-section framing"
+    assert "plantilla de fase, trece secciones" in text, "the F2 design schema must declare 13 sections"
+    schema = _design_f2_schema()
+    opening_row = _design_row(schema, 7, "Cambio atómico de apertura")
+    for marker in ("Artefactos obligatorios", "Review y baseline"):
+        assert marker in opening_row, f"the opening row must state its canonical position relative to {marker!r}"
+    for marker in (
+        "F2: no_iniciada → en_progreso",
+        "active_phase: F1 → F2",
+        "único bloque coherente",
+    ):
+        assert marker in opening_row, f"the opening row must keep {marker!r}"
+    baseline_row = _design_row(schema, 8, "Review y baseline")
+    assert "SRR" in baseline_row and "Functional Baseline" in baseline_row, (
+        "the Review y baseline row keeps the SRR and Functional Baseline semantics"
+    )
+    doc_review_row = _design_row(schema, 9, "Revisión de documentos obligatorios")
+    assert "f2-requisitos-sistema-formal-r<NNN>" in doc_review_row, (
+        "the document-review row keeps the package lifecycle"
+    )
+    assert _design_row(schema, 13, "Referencias"), "the schema must end at row 13 (Referencias)"
 
 
 def _ficha_section(text: str, capability: str) -> str:

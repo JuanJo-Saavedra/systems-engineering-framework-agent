@@ -17,8 +17,11 @@ Pregunta central: `¿Qué necesitan los stakeholders?`. En modo preliminar, tran
 
 - Eres la proyección operativa de la capacidad `f1_stakeholders_preliminar` sobre el contrato de la fase F1 del marco; no redefines el significado del dominio.
 - Trabaja en madurez `preliminar` únicamente. El modo formal (`f1_stakeholders_formal`) no pertenece a esta skill.
-- Fase `F0` se encuentra ya cerrada (con su aprobación usuario) y fase `F1 preliminar` abierta.
-- Guardas de estado: si la fila fase `F1 preliminar` figura `no_iniciada` o fase `F0` no está cerrada, no ejecutas trabajo de fase `F1`: informas el estado observado y esperas la resolución usuario; nunca propones activar fase `F1 formal` ni cerrar fase `F0`.
+- Reconoces exactamente tres estados y tratas cada uno según corresponde:
+  1. **Primer trabajo (apertura)** — estado global `preproyecto_presupuesto`, fila `F0: cerrada` con su aprobación humana verificable, fila `F1 preliminar: no_iniciada` y **pedido humano explícito** de abrir `F1 preliminar`: verificas fail-closed el cierre, la aprobación y los gates previos y propones el cambio atómico de apertura (ver `## Cambio atómico de apertura`); no ejecutas aún trabajo de fase.
+  2. **Continuación normal** — fila `F1 preliminar: en_progreso` con `active_phase: F1` y `active_maturity: preliminar`: ejecutas trabajo de fase sobre los artefactos y registros ya abiertos.
+  3. **Fase ya cerrada coherentemente** — fila `F1 preliminar: cerrada` con artefactos en `preliminar`/`aprobado`: respondes de forma idempotente; informas el estado observado, no propones cambios y no reabres nada.
+- Fail-closed: ante cualquier combinación parcial o inconsistente (p. ej. fila `F1 preliminar: no_iniciada` sin el pedido humano explícito, `F0` no cerrada o sin su aprobación humana verificable, `aprobado_en_transicion` con fila `no_iniciada`, o fila `en_progreso` con `active_phase: F0`), informas el conflicto observado y bloqueas sin inferir reparaciones; nunca propones activar fase `F1 formal` ni cerrar fase `F0`.
 - Nada de fase `F2`: no generas requisitos de sistema, arquitectura ni diseño detallado, ni métodos de verificación. No declaras baseline: en fase `F1` no aplica baseline formal de sistema.
 - Nunca te autoapruebes: ni el cierre de fase, ni la aprobación del trabajo, ni el `hito_aprobacion_trabajo`, ni la transición a fase `F1 formal`, ni la apertura de fase `F2`. Toda autorización es explícita y usuario.
 - Trabaja desde evidencia y estado: decides el siguiente paso más útil según la evidencia disponible y la madurez de los artefactos actuales; no hay procedimiento numerado ni orden obligatorio.
@@ -96,6 +99,25 @@ Ciclo `doc_approval`:
 4. **Cierre formal**: el usuario aprueba y el `doc_approval` vuelve a `aprobado`.
 
 Si un artefacto ya existe en su ruta canónica, propones madurarlo allí mediante una propuesta de actualización para persistencia del padre; nunca propones reiniciarlo ni fabricas contenido para llenar un vacío.
+
+## Cambio atómico de apertura
+
+La apertura de `F1 preliminar` nunca la decide esta skill: ocurre solo después del cierre y la aprobación humana de fase `F0` y de un **pedido humano explícito** de abrir `F1 preliminar`. Ante ese pedido, en su primer trabajo verificas fail-closed:
+
+- la fila `F0: cerrada` en `proyecto/estado/estado_fases.md`, con la aprobación humana de `F0` verificable,
+- el gate de transición satisfecho: necesidad entendible y recomendación de continuidad para cotizar,
+- el estado global `preproyecto_presupuesto` vigente y las fuentes de estado mutuamente consistentes,
+- la fila `F1 preliminar: no_iniciada` (apertura aún no persistida).
+
+Verificado todo, propones un único bloque coherente que el orquestador persiste como un solo cambio, sin estados parciales:
+
+| Fuente | Cambio propuesto (anterior → propuesto) | Precondición / evidencia del usuario |
+| --- | --- | --- |
+| `proyecto/estado/estado_fases.md` | Fila `F1 preliminar: no_iniciada → en_progreso`; fila `F0: cerrada` (sin cambio) | Cierre y aprobación de `F0` verificados fail-closed; pedido humano explícito |
+| `proyecto/estado/proyecto_actual.md` | `active_phase: F0 → F1`; `active_maturity: preliminar` (sin cambio); `project_status: preproyecto_presupuesto` (sin cambio) | Consistencia con `estado_fases.md` |
+| Los cuatro artefactos (`proyecto/fases/f1_stakeholders/**`) | Creación en sus rutas canónicas con `active_maturity: preliminar` y `doc_approval: pendiente`; sin contenido fabricado para llenar vacíos | Rutas canónicas |
+
+La madurez del artefacto y el estado global no cambian en la apertura: `F1 preliminar` abre dentro del estado `preproyecto_presupuesto` ya vigente. No existen estados intermedios donde la fila `F1 preliminar` esté `en_progreso` sin los cuatro artefactos en sus rutas canónicas, ni viceversa. La skill no abre por decisión propia: sin el pedido humano explícito o ante precondiciones fallidas, informas el estado observado y bloqueas sin proponer la apertura.
 
 ## Review y baseline
 

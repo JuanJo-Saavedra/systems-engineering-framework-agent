@@ -83,6 +83,18 @@ Artefactos obligatorios de F0 según el marco:
 
 El producto no define rutas canónicas en `proyecto/` para la mayoría de estos artefactos. Salvo los registros transversales con ruta canónica (ver `## Procesos y registros transversales`), cada artefacto obligatorio se entrega como borrador estructurado marcado `ubicación pendiente` hasta que el proyecto o el marco definan su ubicación autoritativa. Si un artefacto ya existe en una ubicación autoritativa del proyecto, se madura allí. Nunca se inventan rutas ni se fabrica contenido para llenar un vacío.
 
+## Cambio atómico de apertura
+
+La apertura de `F0` ya fue materializada por la inicialización del proyecto: esta skill no inventa fase previa ni transición de apertura. En su primer trabajo verifica fail-closed el estado inicial leyendo `proyecto/estado/proyecto_actual.md` y `proyecto/estado/estado_fases.md`:
+
+- `project_status: preproyecto_presupuesto` (estado global vigente, sin cambio),
+- `active_phase: F0`,
+- `active_maturity: preliminar`,
+- fila `F0: en_progreso`,
+- estructura inicial del proyecto lista: estado, hitos y registros en sus rutas canónicas.
+
+Ante cualquier combinación distinta o inconsistente (p. ej. `active_phase` distinta de `F0`, fila `F0` en otro estado o fuentes de estado contradictorias), informas el conflicto observado y bloqueas sin inferir reparaciones: no propones transición alguna. Los artefactos obligatorios de `F0` sin ruta canónica siguen `ubicación pendiente`: la apertura no inventa rutas ni fabrica contenido.
+
 ## Review y baseline
 
 - Review asociada: **MCR / Concept Review** — confirmar comprensión del problema, validar factibilidad preliminar y decidir continuidad; momento típico: cierre de F0.

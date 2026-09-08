@@ -116,9 +116,9 @@ Reglas de mapeo:
 
 ## Plantilla de skill de fase
 
-Estas son las **once secciones principales por defecto de toda skill de fase**, más la subsección obligatoria `### Cambio atómico de apertura` dentro de `## Artefactos obligatorios`. Las demás capacidades (transversales, tareas puntuales, transiciones, control) adaptan su estructura a partir de su ficha del catálogo y de su fuente de dominio; no están obligadas a estas secciones.
+Estas son las **doce secciones principales por defecto de toda skill de fase**, con la sección obligatoria `## Cambio atómico de apertura` ubicada después de `## Artefactos obligatorios` y antes de `## Review y baseline`. Las demás capacidades (transversales, tareas puntuales, transiciones, control) adaptan su estructura a partir de su ficha del catálogo y de su fuente de dominio; no están obligadas a estas secciones.
 
-El cambio atómico de apertura hace visible el comportamiento específico del **primer trabajo**: la skill reconoce las precondiciones y el estado anterior, y propone al orquestador un solo bloque coherente con todas las transiciones de estado y creaciones iniciales. La skill no persiste ese bloque ni deja estados parciales; el orquestador relee, valida y escribe como single-writer.
+El cambio atómico de apertura hace visible el comportamiento específico del **primer trabajo**: el orquestador padre analiza, sugiere y propone; el humano siempre abre, aprueba y cierra fases explícitamente. Tras el pedido humano explícito de apertura, la skill de la siguiente fase verifica fail-closed el cierre, la aprobación y los gates previos, reconoce el estado anterior y propone al orquestador un solo bloque coherente con todas las transiciones de estado y creaciones iniciales: no decide ni autoriza abrir. La skill no persiste ese bloque ni deja estados parciales; el orquestador relee, valida y escribe como single-writer.
 
 | # | Sección | Debe contener | Evitar |
 | -- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
@@ -196,7 +196,7 @@ La propuesta no es una orden ni una autorización. El padre relee las fuentes au
 
 El flujo canónico de F1 separa claramente preparación, decisión, consolidación y ejecución formal:
 
-1. `f1_stakeholders_preliminar` reúne material para cotizar y evalúa readiness frente al `hito_aprobacion_trabajo`; no aprueba el trabajo.
+1. `f1_stakeholders_preliminar` reúne material para cotizar y evalúa readiness frente al `hito_aprobacion_trabajo`; no aprueba el trabajo. Su primer trabajo, tras el cierre y la aprobación humana de `F0` y el pedido humano explícito de apertura, propone el cambio atómico de apertura (`F1 preliminar: no_iniciada → en_progreso`); nunca abre la fase por decisión propia.
 2. Un humano emite la decisión de aprobación y autoriza —o no— el inicio formal.
 3. `handoff_presupuesto_a_proyecto` se activa ante esa decisión aprobatoria, consolida el hito, los insumos heredados, los vacíos antes de `F2` y los registros transversales que continúan.
 4. El orquestador padre persiste de forma consistente el hito completo, el estado global `aprobado_en_transicion` y el enrutamiento `active_phase: F1` + `active_maturity: formal`; la fila `F1 formal` permanece `no_iniciada` hasta que su propia capacidad de fase comience el trabajo formal.
@@ -332,7 +332,7 @@ Checklist pre-commit:
 `f0-factibilidad` (v3, aprobada) es el patrón de esta plantilla, no un caso aislado:
 
 - Mapea la capacidad `f0_factibilidad` → skill `f0-factibilidad`; ficha con `estado_implementacion: mapeada` y binding declarado.
-- Demuestra las once secciones por defecto, el modelo de evidencia (`hechos verificados` / `supuestos` / `vacíos` / `contradicciones`), la política de `ubicación pendiente` para artefactos sin ruta, la persistencia en registros transversales (`riesgos`, `requisitos` a nivel de necesidad preliminar, `decisiones_tecnicas` condicional) y la separación de los tres juicios (recomendación técnica, readiness del dossier frente a la MCR, decisión humana).
+- Demuestra las doce secciones por defecto, el modelo de evidencia (`hechos verificados` / `supuestos` / `vacíos` / `contradicciones`), la política de `ubicación pendiente` para artefactos sin ruta, la persistencia en registros transversales (`riesgos`, `requisitos` a nivel de necesidad preliminar, `decisiones_tecnicas` condicional) y la separación de los tres juicios (recomendación técnica, readiness del dossier frente a la MCR, decisión humana).
 - Fuente: [`runtime/skills/f0-factibilidad/SKILL.md`](../../runtime/skills/f0-factibilidad/SKILL.md). No duplica el contrato completo de la fase; lo proyecta desde `marco/fases/fase_0_concepto_y_factibilidad.md`.
 
 ## Relacionado

@@ -18,7 +18,7 @@ Pregunta central: `¿Qué debe hacer técnicamente el sistema?`. Traducir las ne
 - Trabajas en madurez `formal` únicamente: `F2` nace formal y **no existe modo preliminar** en esta fase. Ningún artefacto de la fase adopta nunca madurez preliminar, no hay ciclo de madurez preliminar a formal y no existen copias por madurez.
 - Presupones `F1 formal` cerrada y el gate de paso a `F2` satisfecho; consumes esas salidas aprobadas como contrato de entrada, no como tarea.
 - Reconoces exactamente tres estados y tratas cada uno según corresponde:
-  1. **Primer trabajo** — `project_status: proyecto_formal`, fila `F2: no_iniciada`, `F1 formal: cerrada` y gate de paso a `F2` satisfecho: verificas el gate fail-closed y propones el cambio atómico de apertura (ver `## Cambio atómico de apertura`).
+  1. **Primer trabajo** — `project_status: proyecto_formal`, fila `F2: no_iniciada`, `F1 formal: cerrada`, gate de paso a `F2` satisfecho y **pedido humano explícito** de apertura: verificas el gate fail-closed y propones el cambio atómico de apertura (ver `## Cambio atómico de apertura`).
   2. **Continuación normal** — fila `F2: en_progreso` con estado global `proyecto_formal`: ejecutas trabajo sobre requerimientos, matrices, plan y registros; esperas sin proponer mutaciones mientras el paquete activo esté `en_verificacion`.
   3. **Fase ya cerrada coherentemente** — fila `F2: cerrada`, artefactos en `formal`/`aprobado` y Functional Baseline registrada: respondes de forma idempotente; informas el estado observado, no propones cambios y no reabres nada.
 - Fail-closed: ante cualquier combinación parcial o inconsistente (`F1 formal` no `cerrada`, fila `F2` distinta de `no_iniciada` en el primer trabajo, paquete `f1-stakeholders` sin promover, regla de paso a `F2` insatisfecha, estado global distinto de `proyecto_formal`), informas el conflicto observado y bloqueas sin inferir reparaciones. Nunca reabres el hito de aprobación de `F1`, no rehaces trabajo preliminar ni alteras la decisión aprobatoria registrada.
@@ -110,7 +110,7 @@ Ciclo `doc_approval` en esta skill (lineal, sin reset por madurez):
 
 ## Cambio atómico de apertura
 
-Primer trabajo de la fase (gate de paso a `F2` verificado fail-closed): propones un único bloque coherente que el orquestador persiste como un solo cambio, sin estados parciales:
+Primer trabajo de la fase, tras el **pedido humano explícito** de apertura y con el gate de paso a `F2` verificado fail-closed: propones un único bloque coherente que el orquestador persiste como un solo cambio, sin estados parciales:
 
 | Fuente | Cambio propuesto (anterior → propuesto) | Precondición / evidencia |
 | --- | --- | --- |
@@ -118,7 +118,7 @@ Primer trabajo de la fase (gate de paso a `F2` verificado fail-closed): propones
 | `proyecto/estado/proyecto_actual.md` | `active_phase: F1 → F2`; `active_maturity: formal` (sin cambio); `project_status: proyecto_formal` (sin cambio) | Consistencia con `estado_fases.md` |
 | Los cinco artefactos (`proyecto/fases/f2_requisitos_sistema/**`) | Creación con `active_maturity: formal` y `doc_approval: pendiente`; sin contenido fabricado para llenar vacíos | Rutas canónicas |
 
-El estado global **no cambia** de valor en la apertura: `F2` abre dentro del estado `proyecto_formal` ya vigente. No existen estados intermedios donde la fila `F2` esté `en_progreso` sin que los cinco artefactos existan en sus rutas canónicas, ni viceversa.
+El estado global **no cambia** de valor en la apertura: `F2` abre dentro del estado `proyecto_formal` ya vigente. No existen estados intermedios donde la fila `F2` esté `en_progreso` sin que los cinco artefactos existan en sus rutas canónicas, ni viceversa. La apertura nunca la decides tú: sin el pedido humano explícito, informas el estado observado y bloqueas sin proponerla.
 
 ## Review y baseline
 
